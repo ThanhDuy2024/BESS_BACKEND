@@ -301,4 +301,59 @@ router.post("/changePasswordWithOtp", async (req, res) => {
     })
   }
 })
+
+router.post("/changePassword", verify, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const dbResponse = await apiData.funcTable('func_checkpassword', 
+      `(
+        ${req.user.data[0].id_}
+      )`
+    );
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    }
+
+    if(dbResponse.data.length === 0) {
+      return res.status(404).json({
+        status: false,
+        msg: "User not found!"
+      })  
+    }
+
+    const compare = bcrypt.compareSync(oldPassword, dbResponse.data[0].func_checkpassword);
+
+    if(!compare) {
+      return res.status(400).json({
+        status: false,
+        msg: "Your old password incorrect!"
+      })    
+    }
+
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(newPassword, salt);
+    apiData.funcTable('func_changepassword',
+      `(
+        '${req.user.data[0].email_}',
+        '${hash}'
+      )`
+    )
+
+
+    res.status(200).json({
+      status: true,
+      msg: "Change password successfuly"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
 module.exports = router;

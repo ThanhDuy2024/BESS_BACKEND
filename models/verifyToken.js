@@ -4,6 +4,7 @@ const verify = async (req, res, next) => {
     try {
         const token = req.headers.token;
 
+        //Check token
         if (!token) {
             return res.status(401).json({
                 status: false,
@@ -12,7 +13,8 @@ const verify = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+        
+        //check expire and secret key
         if (!decoded) {
             return res.status(400).json({
                 status: false,
@@ -20,6 +22,7 @@ const verify = async (req, res, next) => {
             })
         }
 
+        //check user info
         const user = await apiData.funcTable("func_getuser", `(${decoded.id})`);
 
         if (!user.status) {
