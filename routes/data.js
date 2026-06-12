@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const sendOtpNodemailer = require("../models/nodemailer");
 const verify = require("../models/verifyToken");
 const cache = require("../models/cache");
+const XlsxPopulate = require('xlsx-populate');
 router.get("/", (req, res) => {
   res.status(200).json({ message: "REST APIs is working" });
 });
@@ -240,7 +241,7 @@ router.post("/renderOtp", async (req, res) => {
 
 router.post("/verifyOtp", async (req, res) => {
   try {
-    console.log(req.body);
+    ;
     const email = cache.get(req.body.otp);
     console.log(email);
     if (!email) {
@@ -307,33 +308,33 @@ router.post("/changePasswordWithOtp", async (req, res) => {
 router.post("/changePassword", verify, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    const dbResponse = await apiData.funcTable('func_checkpassword', 
+    const dbResponse = await apiData.funcTable('func_checkpassword',
       `(
         ${req.user.data[0].id_}
       )`
     );
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db!"
       })
     }
 
-    if(dbResponse.data.length === 0) {
+    if (dbResponse.data.length === 0) {
       return res.status(404).json({
         status: false,
         msg: "User not found!"
-      })  
+      })
     }
 
     const compare = bcrypt.compareSync(oldPassword, dbResponse.data[0].func_checkpassword);
 
-    if(!compare) {
+    if (!compare) {
       return res.status(400).json({
         status: false,
         msg: "Your old password incorrect!"
-      })    
+      })
     }
 
     const salt = bcrypt.genSaltSync(10);
@@ -349,6 +350,61 @@ router.post("/changePassword", verify, async (req, res) => {
     res.status(200).json({
       status: true,
       msg: "Change password successfuly"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
+
+router.post("/excel", verify, async (req, res) => {
+  try {
+    const usersArray = [];
+    const dbResponse = await apiData.funcTable('func_printexcel', `()`);
+
+    for (const item of dbResponse.data) {
+      const array = [
+        item.id_,
+        item.username_,
+        item.full_name_,
+        item.email_,
+        item.phone_ === null ? "Null" : item.phone_,
+        item.address_ === null ? "Null" : item.phone_,
+        item.role_,
+        item.status_
+      ]
+
+      usersArray.push(array);
+    };
+
+    XlsxPopulate.fromBlankAsync().then(workbook => {
+      const sheet = workbook.sheet(0);
+      const data = [
+        ["Id", "User name", "Full Name", "Email", "Phone", "Address", "Role", "Status"],
+        ...usersArray
+      ];
+
+      sheet.cell("A1").value(data);
+
+      sheet.range("A1:H1").style({
+        bold: true,
+        fill: "4472C4",       // màu nền xanh
+        fontColor: "FFFFFF",  // chữ trắng
+        horizontalAlignment: "center"
+      });
+
+      sheet.range(`A2:A${2 + usersArray.length}`).style({
+        bold: true
+      })
+      return workbook.toFileAsync("./execel/users.xlsx");
+    })
+
+    res.status(200).json({
+      status: true,
+      msg: "Excel is render"
     })
   } catch (error) {
     console.log(error);
