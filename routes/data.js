@@ -240,7 +240,9 @@ router.post("/renderOtp", async (req, res) => {
 
 router.post("/verifyOtp", async (req, res) => {
   try {
+    console.log(req.body);
     const email = cache.get(req.body.otp);
+    console.log(email);
     if (!email) {
       return res.status(400).json({
         status: false,
@@ -263,7 +265,7 @@ router.post("/verifyOtp", async (req, res) => {
 
 router.post("/changePasswordWithOtp", async (req, res) => {
   try {
-    const email = req.headers.email;
+    const email = req.body.email;
 
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
