@@ -308,6 +308,14 @@ router.post("/changePasswordWithOtp", async (req, res) => {
 router.post("/changePassword", verify, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
+
+    if(req.user.data[0].id_ === 8) {
+      return res.status(400).json({
+        status: false,
+        msg: "You not permission in action"
+      })
+    }
+    
     const dbResponse = await apiData.funcTable('func_checkpassword',
       `(
         ${req.user.data[0].id_}
@@ -399,7 +407,7 @@ router.post("/excel", verify, async (req, res) => {
       sheet.range(`A2:A${2 + usersArray.length}`).style({
         bold: true
       })
-      return workbook.toFileAsync("./execel/users.xlsx");
+      return workbook.toFileAsync("./excel/users.xlsx");
     })
 
     res.status(200).json({
@@ -413,5 +421,7 @@ router.post("/excel", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
+
+
 module.exports = router;
