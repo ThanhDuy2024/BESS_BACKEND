@@ -315,7 +315,7 @@ router.post("/changePassword", verify, async (req, res) => {
         msg: "You not permission in action"
       })
     }
-    
+
     const dbResponse = await apiData.funcTable('func_checkpassword',
       `(
         ${req.user.data[0].id_}
@@ -364,6 +364,54 @@ router.post("/changePassword", verify, async (req, res) => {
     res.status(400).json({
       status: false,
       msg: "Bad request"
+    })
+  }
+})
+
+router.post("/changeUserInfo", verify, async (req, res) => {
+  try {
+    const { action, value, address } = req.body;
+    const actionFormat = action.toLowerCase();
+
+    if(actionFormat !== "name" && actionFormat !== "email" && actionFormat !== "phone" && actionFormat !== "address") {
+      return res.status(400).json({
+        status: false,
+        msg: "Error action"
+      })
+    };
+
+    const userId = req.user.data[0].id_;
+    const dbResponse = await apiData.funcTable('func_changeuserinfo', 
+      `(
+        '${actionFormat}',
+        '${value}',
+        ${userId}
+      )`
+    )
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "error db!"
+      })
+    };
+
+    if(dbResponse.data[0].func_changeuserinfo === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Your email existed!"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "Chang info success!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Change info error"
     })
   }
 })
