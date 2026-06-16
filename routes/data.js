@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const sendOtpNodemailer = require("../models/nodemailer");
 const verify = require("../models/verifyToken");
 const cache = require("../models/cache");
+const { format } = require('date-and-time');
 const XlsxPopulate = require('xlsx-populate');
 router.get("/", (req, res) => {
   res.status(200).json({ message: "REST APIs is working" });
@@ -476,7 +477,7 @@ router.post("/createUser", verify, async (req, res) => {
         )`
     )
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db"
@@ -505,7 +506,96 @@ router.post("/createUser", verify, async (req, res) => {
 //End create user
 
 //Logic role and permission
+router.post("/createRole", verify, async (req, res) => {
+  try {
+    const { roleName, status } = req.body;
+    const roleNameFormat = roleName.toLowerCase();
+    const dbResponse = await apiData.funcTable('func_insertrole',
+      `(
+        '${roleNameFormat}',
+        '${status}',
+        ${req.user.data[0].id_}
+      )`
+    );
 
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    if (dbResponse.data[0].func_insertrole == false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Role name existed!"
+      })
+    }
+
+    res.status(200).json({
+      status: true,
+      msg: "Role has created!"
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+
+router.post("/getAllRoles", verify, async (req, res) => {
+  try {
+    const dbResponse = await apiData.funcTable('func_getallrole', `()`);
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    const data = [];
+    for (const item of dbResponse.data) {
+      const rawData = {
+        id: item.id_,
+        roleName: item.rolename_,
+        status: item.status_,
+        createdBy: item.username_,
+        createdAt: format(item.timestamp_, "DD/MM/YYYY")
+      };
+      data.push(rawData);
+    }
+    res.status(200).json({
+      status: true,
+      data: data
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+
+router.post("/deleteRole", verify, async (req, res) => {
+  try {
+    const { roleId } = req.body;
+    res.status(200).json({
+      status: true,
+      msg: "Role has deleted!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+//End role and permission 
 router.post("/excel", verify, async (req, res) => {
   try {
     const usersArray = [];
