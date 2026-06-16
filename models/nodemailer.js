@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const sendOtpNodemailer = (userEmail, otp) => {
+const sendOtpNodemailer = (userEmail, otp, html) => {
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 587,
@@ -15,7 +15,7 @@ const sendOtpNodemailer = (userEmail, otp) => {
         from: process.env.MAIN_MAIL,
         to: userEmail,
         subject: 'Mã OTP xác nhận!',
-        html: `Mã OTP của bạn là: <b>${otp}</b> <div>Lưu ý mã OTP chỉ có hiệu lực trong vòng 1 phút</div>`
+        html: html
     };
 
     transporter.sendMail(mailOptions, function (error, info) {

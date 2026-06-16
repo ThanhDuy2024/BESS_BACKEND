@@ -28,6 +28,7 @@ router.post("/getModbusTemp", async (req, res) => {
   });
 });
 
+//Login and get users
 router.post("/login", async (req, res) => {
   try {
     const { account, password } = req.body;
@@ -74,7 +75,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/getAllUser", verify, async (req, res) => {
   try {
-    const user = await apiData.funcTable("func_getalluser", `() `);
+    const user = await apiData.funcTable("func_getalluser", `()`);
     return res.status(200).json(user);
   } catch (error) {
     console.log(error);
@@ -96,7 +97,9 @@ router.post("/getUser", verify, async (req, res) => {
     });
   }
 });
+//End login and get users
 
+//Insert, update, delete users
 router.post("/updateUser", verify, async (req, res) => {
   try {
 
@@ -196,7 +199,9 @@ router.post("/updateUser", verify, async (req, res) => {
     })
   }
 })
+//End insert, update, delete users
 
+//forgot password
 router.post("/renderOtp", async (req, res) => {
   try {
     const dbResponse = await apiData.funcTable('func_verifyemail',
@@ -224,8 +229,9 @@ router.post("/renderOtp", async (req, res) => {
     const otp = String(digit);
 
     cache.set(otp, req.body.email);
+    const html = `Mã OTP của bạn là: <b>${otp}</b> <div>Lưu ý mã OTP chỉ có hiệu lực trong vòng 1 phút</div>`
+    sendOtpNodemailer(req.body.email, otp, html);
 
-    sendOtpNodemailer(req.body.email, otp);
     res.status(200).json({
       status: true,
       msg: "Otp sent successfully!"
@@ -241,9 +247,7 @@ router.post("/renderOtp", async (req, res) => {
 
 router.post("/verifyOtp", async (req, res) => {
   try {
-    ;
     const email = cache.get(req.body.otp);
-    console.log(email);
     if (!email) {
       return res.status(400).json({
         status: false,
@@ -304,12 +308,14 @@ router.post("/changePasswordWithOtp", async (req, res) => {
     })
   }
 })
+//End forgot password
 
+//change password and change user infor
 router.post("/changePassword", verify, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
-    if(req.user.data[0].id_ === 8) {
+    if (req.user.data[0].id_ === 8) {
       return res.status(400).json({
         status: false,
         msg: "You not permission in action"
@@ -373,7 +379,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
     const { action, value, address } = req.body;
     const actionFormat = action.toLowerCase();
 
-    if(actionFormat !== "name" && actionFormat !== "email" && actionFormat !== "phone" && actionFormat !== "address") {
+    if (actionFormat !== "name" && actionFormat !== "email" && actionFormat !== "phone" && actionFormat !== "address") {
       return res.status(400).json({
         status: false,
         msg: "Error action"
@@ -381,7 +387,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
     };
 
     const userId = req.user.data[0].id_;
-    const dbResponse = await apiData.funcTable('func_changeuserinfo', 
+    const dbResponse = await apiData.funcTable('func_changeuserinfo',
       `(
         '${actionFormat}',
         '${value}',
@@ -389,14 +395,14 @@ router.post("/changeUserInfo", verify, async (req, res) => {
       )`
     )
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "error db!"
       })
     };
 
-    if(dbResponse.data[0].func_changeuserinfo === false) {
+    if (dbResponse.data[0].func_changeuserinfo === false) {
       return res.status(400).json({
         status: false,
         msg: "Your email existed!"
@@ -405,7 +411,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
 
     res.status(200).json({
       status: true,
-      msg: "Chang info success!"
+      msg: "Change info success!"
     })
   } catch (error) {
     console.log(error);
@@ -415,6 +421,90 @@ router.post("/changeUserInfo", verify, async (req, res) => {
     })
   }
 })
+//end change password and change user infor
+
+//Create user
+router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    //random digit
+    const digit = Math.floor(100000 + Math.random() * 900000);
+    //convert string
+    const otp = String(digit);
+
+    cache.set(otp, email);
+    const html = `Mã OTP kích hoạt tài khoản của bạn là: <b>${otp}</b> <div>Lưu ý mã OTP chỉ có hiệu lực trong vòng 1 phút</div>`
+    sendOtpNodemailer(email, otp, html);
+
+    res.status(200).json({
+      status: true,
+      msg: "Send otp successful"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+});
+
+router.post("/createUser", verify, async (req, res) => {
+  try {
+    const checkOtp = cache.get(req.body.otp);
+
+    if (!checkOtp) {
+      return res.status(400).json({
+        status: false,
+        msg: "Otp expire"
+      })
+    };
+
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(req.body.password, salt);
+
+    const dbResponse = await apiData.funcTable(
+      `func_insertuser`,
+      `(
+          '${req.body.username}',
+          '${req.body.email}',
+          '${hash}',
+          '${req.body.name}', 
+          '${req.body.role}',
+          ${req.body.status === "active" ? true : false}
+        )`
+    )
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    if (dbResponse.data[0].func_insertuser == false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Your email existed!"
+      })
+    }
+
+    res.status(200).json({
+      status: true,
+      msg: "User has created!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+//End create user
+
+//Logic role and permission
 
 router.post("/excel", verify, async (req, res) => {
   try {
