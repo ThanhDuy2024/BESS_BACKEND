@@ -34,7 +34,6 @@ router.post("/login", async (req, res) => {
   try {
     const { account, password } = req.body;
     const result = await apiData.funcTable("func_loginUser", `('${account}')`);
-
     if (!result.status || result.data.length === 0) {
       return res.status(401).json({ status: false, mess: "Login failed" });
     }
@@ -54,7 +53,7 @@ router.post("/login", async (req, res) => {
       {
         id: user.id_,
         username: user.username_,
-        role: user.role_,
+        role: user.rolename_,
       },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
@@ -100,7 +99,7 @@ router.post("/getUser", verify, async (req, res) => {
 });
 //End login and get users
 
-//Insert, update, delete users
+//update, delete users
 router.post("/updateUser", verify, async (req, res) => {
   try {
 
@@ -200,7 +199,7 @@ router.post("/updateUser", verify, async (req, res) => {
     })
   }
 })
-//End insert, update, delete users
+//update, delete users
 
 //forgot password
 router.post("/renderOtp", async (req, res) => {
@@ -464,17 +463,9 @@ router.post("/createUser", verify, async (req, res) => {
 
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
-
     const dbResponse = await apiData.funcTable(
       `func_insertuser`,
-      `(
-          '${req.body.username}',
-          '${req.body.email}',
-          '${hash}',
-          '${req.body.name}', 
-          '${req.body.role}',
-          ${req.body.status === "active" ? true : false}
-        )`
+      `('${req.body.username}', '${req.body.email}', '${hash}', '${req.body.name}', ${req.body.roleId}, '${req.body.status}')`
     )
 
     if (dbResponse.status === false) {
@@ -487,7 +478,7 @@ router.post("/createUser", verify, async (req, res) => {
     if (dbResponse.data[0].func_insertuser == false) {
       return res.status(400).json({
         status: false,
-        msg: "Your email existed!"
+        msg: "Your email or username existed!"
       })
     }
 
@@ -565,8 +556,15 @@ router.post("/getAllRoles", verify, async (req, res) => {
         createdBy: item.username_,
         createdAt: format(item.timestamp_, "DD/MM/YYYY")
       };
-      data.push(rawData);
+      if(req.query.status) {
+        if(req.query.status === rawData.status) {
+          data.push(rawData);
+        }
+      } else {
+        data.push(rawData);
+      }
     }
+
     res.status(200).json({
       status: true,
       data: data
