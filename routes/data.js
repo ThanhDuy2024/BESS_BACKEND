@@ -99,108 +99,6 @@ router.post("/getUser", verify, async (req, res) => {
 });
 //End login and get users
 
-//update, delete users
-router.post("/updateUser", verify, async (req, res) => {
-  try {
-
-    if (req.body.action === "insert") {
-      const { action, id, name, email, password, role, status, username } = req.body
-      const salt = bcrypt.genSaltSync(10);
-      const hash = bcrypt.hashSync(password, salt);
-
-      const dbResponse = await apiData.funcTable(
-        `func_insertuser`,
-        `(
-          '${username}',
-          '${email}',
-          '${hash}',
-          '${name}', 
-          '${role}',
-          ${status === "active" ? true : false}
-        )`
-      )
-      if (dbResponse.data[0].func_insertuser == false) {
-        return res.status(400).json({
-          status: false,
-          mess: "Your email existed!"
-        })
-      } else {
-        res.status(200).json({
-          status: true,
-          mess: "User insert successfully!"
-        })
-      }
-    } else if (req.body.action === "update") {
-      const dbResponse = await apiData.funcTable('func_updateuser',
-        `(
-          ${req.body.id},
-          '${req.body.name}',
-          '${req.body.username}',
-          '${req.body.email}', 
-          '${req.body.role}',
-          ${req.body.status == 'true' ? true : false}
-      )`)
-
-      if (dbResponse.data[0].func_updateuser == false) {
-        return res.status(400).json({
-          status: false,
-          mess: "Your email existed!"
-        })
-      } else {
-        res.status(200).json({
-          status: true,
-          mess: "User insert successfully!"
-        })
-      }
-    } else if (req.body.action === "updateStatus") {
-      const dbResponse = await apiData.funcTable('func_updatestatususer',
-        `(
-          ${req.body.id},
-          ${req.body.status === 'true' ? false : true}
-        )`
-      )
-
-      if (dbResponse.data[0].func_updatestatususer == false) {
-        return res.status(400).json({
-          status: false,
-          mess: "error database!"
-        })
-      } else {
-        res.status(200).json({
-          status: true,
-          mess: "Status update successfully!"
-        })
-      }
-    } else if (req.body.action === "delete") {
-      const dbResponse = await apiData.funcTable('func_deleteuser',
-        `(
-          ${req.body.id}
-        )`
-      )
-
-      if (dbResponse.data[0].func_deleteuser == false) {
-        return res.status(400).json({
-          status: false,
-          mess: "error database!"
-        })
-      } else {
-        res.status(200).json({
-          status: true,
-          mess: "User delete successfully!"
-        })
-      }
-    }
-
-  } catch (error) {
-    console.log(error);
-    res.status(401).json({
-      status: false,
-      mess: "Invalid token"
-    })
-  }
-})
-//update, delete users
-
 //forgot password
 router.post("/renderOtp", async (req, res) => {
   try {
@@ -423,7 +321,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
 })
 //end change password and change user infor
 
-//Create user
+//User management logic
 router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
   try {
     const { email } = req.body;
@@ -494,7 +392,88 @@ router.post("/createUser", verify, async (req, res) => {
     })
   }
 })
-//End create user
+
+router.post("/updateUser", verify, async (req, res) => {
+  try {
+    const dbResponse = await apiData.funcTable('func_updateuser',
+      `(
+        ${req.body.userId},
+        '${req.body.fullName}',
+        ${req.body.roleId},
+        '${req.body.status}'
+      )`
+    )
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if (dbResponse.data[0].func_updateuser === "error user") {
+      return res.status(404).json({
+        status: false,
+        msg: "User not found"
+      })
+    };
+
+    if (dbResponse.data[0].func_updateuser === "error role") {
+      return res.status(404).json({
+        status: false,
+        msg: "Role not found"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "User has updated!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+
+router.post("/deleteUser", verify, async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const dbResponse = await apiData.funcTable('func_deleteuser',
+      `(
+        ${userId}
+      )`
+    );
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if (dbResponse.data[0].func_deleteuser === false) {
+      return res.status(404).json({
+        status: false,
+        msg: "User not found!"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "User has deleted!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+//End User management logic
 
 //Logic role and permission
 router.post("/createRole", verify, async (req, res) => {
@@ -556,8 +535,8 @@ router.post("/getAllRoles", verify, async (req, res) => {
         createdBy: item.username_,
         createdAt: format(item.timestamp_, "DD/MM/YYYY")
       };
-      if(req.query.status) {
-        if(req.query.status === rawData.status) {
+      if (req.query.status) {
+        if (req.query.status === rawData.status) {
           data.push(rawData);
         }
       } else {
