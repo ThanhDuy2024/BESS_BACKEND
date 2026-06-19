@@ -7,6 +7,9 @@ const verify = require("../models/verifyToken");
 const cache = require("../models/cache");
 const { format } = require('date-and-time');
 const XlsxPopulate = require('xlsx-populate');
+const funcPagination = require("../models/pagination");
+const capitalizeFirstLetter = require("../models/capitalize");
+const limit = 10;
 router.get("/", (req, res) => {
   res.status(200).json({ message: "REST APIs is working" });
 });
@@ -40,7 +43,7 @@ router.post("/login", async (req, res) => {
 
     const user = result.data[0];
 
-    if (!user.status_) {
+    if (user.status_ === "locked" || user.status_ === "deleted") {
       return res.status(401).json({ status: false, mess: "Account is locked" });
     }
 
@@ -70,19 +73,6 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ status: false, mess: "System Err" });
-  }
-});
-
-router.post("/getAllUser", verify, async (req, res) => {
-  try {
-    const user = await apiData.funcTable("func_getalluser", `()`);
-    return res.status(200).json(user);
-  } catch (error) {
-    console.log(error);
-    return res.status(401).json({
-      status: false,
-      mess: "Invalid token",
-    });
   }
 });
 
@@ -393,6 +383,19 @@ router.post("/createUser", verify, async (req, res) => {
   }
 })
 
+router.post("/getAllUser", verify, async (req, res) => {
+  try {
+    const user = await apiData.funcTable("func_getalluser", `()`);
+    return res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    return res.status(401).json({
+      status: false,
+      mess: "Invalid token",
+    });
+  }
+});
+
 router.post("/updateUser", verify, async (req, res) => {
   try {
     const dbResponse = await apiData.funcTable('func_updateuser',
@@ -473,6 +476,117 @@ router.post("/deleteUser", verify, async (req, res) => {
     })
   }
 })
+
+router.post("/recoveryList", verify, async (req, res) => {
+  try {
+    const filter = {
+      search: '',
+      sort: 'id'
+    };
+
+    if (req.query.search) {
+      filter.search = req.query.search;
+    };
+
+    if (req.query.sort) {
+      filter.sort = req.query.sort.toLowerCase();
+    }
+
+    const totalRecord = await apiData.funcTable('func_totalrecoveryuser', `('${filter.search}')`);
+
+    if (totalRecord.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    const totalUserRecovery = totalRecord.data[0].func_totalrecoveryuser;
+
+    let pagination = {}
+    if (req.query.page) {
+      pagination = funcPagination(req.query.page, limit, totalUserRecovery);
+    }
+
+    const dbResponse = await apiData.funcTable('func_getallrecoveryuser',
+      `(
+        '${filter.search}',
+        '${filter.sort}',
+        ${pagination.offset},
+        ${limit}
+      )`
+    );
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    const recovery = dbResponse.data;
+    const data = [];
+    for (const item of recovery) {
+      const rawData = {
+        id: item.id_,
+        fullName: item.full_name_,
+        username: item.username_,
+        email: item.email_,
+        roleId: item.roleid_,
+        roleName: capitalizeFirstLetter(item.rolename_),
+        status: item.status_,
+        deletedAt: format(item.deleted_at_, "HH:mm DD/MM/YYYY"),
+      }
+      data.push(rawData);
+    }
+    res.status(200).json({
+      status: true,
+      data: data,
+      totalPage: pagination.totalPage
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+
+router.post("/recovery", verify, async (req, res) => {
+  try {
+    const dbResponse = await apiData.funcTable('func_recoveryUser',
+      `(
+        ${req.body.userId}
+      )`
+    );
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if (dbResponse.data[0].func_recoveryUser === false) {
+      return res.status(404).json({
+        status: false,
+        msg: "User not found"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "Recovery successful!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
 //End User management logic
 
 //Logic role and permission
@@ -517,7 +631,49 @@ router.post("/createRole", verify, async (req, res) => {
 
 router.post("/getAllRoles", verify, async (req, res) => {
   try {
-    const dbResponse = await apiData.funcTable('func_getallrole', `()`);
+    const filter = {
+      search: "",
+      status: "",
+      sort: "id"
+    };
+
+    if(req.query.search) {
+      filter.search = req.query.search;
+    };
+
+    if(req.query.status) {
+      filter.status = req.query.status
+    }
+
+    if(req.query.sort) {
+      filter.sort = req.query.sort;
+    }
+
+    const totalRecord = await apiData.funcTable('func_totalrole', `('${filter.search}', '${filter.status}')`);
+
+    if(totalRecord.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    const totalRole = totalRecord.data[0].func_totalrole;
+
+    let pagination = {};
+    if(req.query.page) {
+      pagination = funcPagination(req.query.page, limit, totalRole);
+    };
+
+    const dbResponse = await apiData.funcTable('func_getallrole', 
+      `(
+        ${pagination.offset},
+        ${limit},
+        '${filter.search}',
+        '${filter.status}',
+        '${filter.sort}'
+      )`
+    );
 
     if (dbResponse.status === false) {
       return res.status(400).json({
@@ -530,10 +686,10 @@ router.post("/getAllRoles", verify, async (req, res) => {
     for (const item of dbResponse.data) {
       const rawData = {
         id: item.id_,
-        roleName: item.rolename_,
+        roleName: capitalizeFirstLetter(item.rolename_),
         status: item.status_,
         createdBy: item.username_,
-        createdAt: format(item.timestamp_, "DD/MM/YYYY")
+        createdAt: format(item.timestamp_, "HH:mm DD/MM/YYYY")
       };
       if (req.query.status) {
         if (req.query.status === rawData.status) {
@@ -546,7 +702,8 @@ router.post("/getAllRoles", verify, async (req, res) => {
 
     res.status(200).json({
       status: true,
-      data: data
+      data: data,
+      totalPage: pagination.totalPage
     });
   } catch (error) {
     console.log(error);
