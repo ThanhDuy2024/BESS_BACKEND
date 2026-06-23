@@ -486,13 +486,15 @@ router.post("/recoveryList", verify, async (req, res) => {
 
     if (req.query.search) {
       filter.search = req.query.search;
-    };
+    } else {
+      filter.search = '';
+    }
 
     if (req.query.sort) {
       filter.sort = req.query.sort.toLowerCase();
     }
 
-    const totalRecord = await apiData.funcTable('func_totalrecoveryuser', `('${filter.search}')`);
+    const totalRecord = await apiData.funcTable('func_totalrecoveryuser', `('${filter.search === 'undefined' ? '' : filter.search}')`);
 
     if (totalRecord.status === false) {
       return res.status(400).json({
@@ -502,12 +504,13 @@ router.post("/recoveryList", verify, async (req, res) => {
     };
 
     const totalUserRecovery = totalRecord.data[0].func_totalrecoveryuser;
-
     let pagination = {}
     if (req.query.page) {
       pagination = funcPagination(req.query.page, limit, totalUserRecovery);
-    }
-
+    } else {
+      pagination = funcPagination(1, limit, totalUserRecovery);
+    };
+  
     const dbResponse = await apiData.funcTable('func_getallrecoveryuser',
       `(
         '${filter.search}',
@@ -663,6 +666,8 @@ router.post("/getAllRoles", verify, async (req, res) => {
     let pagination = {};
     if(req.query.page) {
       pagination = funcPagination(req.query.page, limit, totalRole);
+    } else {
+      pagination = funcPagination(1, limit, totalRole);
     };
 
     const dbResponse = await apiData.funcTable('func_getallrole', 
@@ -689,7 +694,8 @@ router.post("/getAllRoles", verify, async (req, res) => {
         roleName: capitalizeFirstLetter(item.rolename_),
         status: item.status_,
         createdBy: item.username_,
-        createdAt: format(item.timestamp_, "HH:mm DD/MM/YYYY")
+        createdAt: format(item.timestamp_, "HH:mm DD/MM/YYYY"),
+        numberOfUser: item.totaluser
       };
       if (req.query.status) {
         if (req.query.status === rawData.status) {
@@ -730,6 +736,7 @@ router.post("/deleteRole", verify, async (req, res) => {
   }
 })
 //End role and permission 
+
 router.post("/excel", verify, async (req, res) => {
   try {
     const usersArray = [];
