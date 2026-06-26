@@ -1,21 +1,22 @@
 const router = require("express").Router();
-const apiData = require("./dataProcess");
+const data = require("./dataProcess");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const sendOtpNodemailer = require("../models/nodemailer");
 const verify = require("../models/verifyToken");
-const cache = require("../models/cache");
-const { format } = require('date-and-time');
 const XlsxPopulate = require('xlsx-populate');
-const funcPagination = require("../models/pagination");
-const capitalizeFirstLetter = require("../models/capitalize");
+const cache = require("../models/core").cache;
+const funcPagination = require("../models/core").funcPagination;
+const capitalizeFirstLetter = require("../models/core").capitalizeFirstLetter;
+const { format } = require('date-and-time');
 const limit = 10;
+
 router.get("/", (req, res) => {
   res.status(200).json({ message: "REST APIs is working" });
 });
 
 router.post("/getModbusTemp", async (req, res) => {
-  let temp = await apiData.funcTable(
+  let temp = await data.funcTable(
     "func_getmodbustemp",
     `('${req.body.sn}')`,
   );
@@ -36,7 +37,7 @@ router.post("/getModbusTemp", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { account, password } = req.body;
-    const result = await apiData.funcTable("func_loginUser", `('${account}')`);
+    const result = await data.funcTable("func_loginUser", `('${account}')`);
     if (!result.status || result.data.length === 0) {
       return res.status(401).json({ status: false, mess: "Login failed" });
     }
@@ -92,7 +93,7 @@ router.post("/getUser", verify, async (req, res) => {
 //forgot password
 router.post("/renderOtp", async (req, res) => {
   try {
-    const dbResponse = await apiData.funcTable('func_verifyemail',
+    const dbResponse = await data.funcTable('func_verifyemail',
       `(
         '${req.body.email}'
       )`
@@ -163,7 +164,7 @@ router.post("/changePasswordWithOtp", async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
 
-    const changePassword = await apiData.funcTable('func_changepassword',
+    const changePassword = await data.funcTable('func_changepassword',
       `(
         '${email}',
         '${hash}'
@@ -210,7 +211,7 @@ router.post("/changePassword", verify, async (req, res) => {
       })
     }
 
-    const dbResponse = await apiData.funcTable('func_checkpassword',
+    const dbResponse = await data.funcTable('func_checkpassword',
       `(
         ${req.user.data[0].id_}
       )`
@@ -241,7 +242,7 @@ router.post("/changePassword", verify, async (req, res) => {
 
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(newPassword, salt);
-    apiData.funcTable('func_changepassword',
+    data.funcTable('func_changepassword',
       `(
         '${req.user.data[0].email_}',
         '${hash}'
@@ -266,7 +267,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
   try {
     const { action, value, address } = req.body;
     const actionFormat = action.toLowerCase();
-
+    console.log(actionFormat);
     if (actionFormat !== "name" && actionFormat !== "email" && actionFormat !== "phone" && actionFormat !== "address") {
       return res.status(400).json({
         status: false,
@@ -275,7 +276,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
     };
 
     const userId = req.user.data[0].id_;
-    const dbResponse = await apiData.funcTable('func_changeuserinfo',
+    const dbResponse = await data.funcTable('func_changeuserinfo',
       `(
         '${actionFormat}',
         '${value}',
@@ -321,7 +322,7 @@ router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
     //convert string
     const otp = String(digit);
 
-    const dbResponse = await apiData.funcTable('func_verifyemailotp',
+    const dbResponse = await data.funcTable('func_verifyemailotp',
       `(
         '${email}'
       )`
@@ -371,7 +372,7 @@ router.post("/createUser", verify, async (req, res) => {
 
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
-    const dbResponse = await apiData.funcTable(
+    const dbResponse = await data.funcTable(
       `func_insertuser`,
       `('${req.body.username}', '${req.body.email}', '${hash}', '${req.body.name}', ${req.body.roleId}, '${req.body.status}')`
     )
@@ -405,7 +406,7 @@ router.post("/createUser", verify, async (req, res) => {
 
 router.post("/getAllUser", verify, async (req, res) => {
   try {
-    const user = await apiData.funcTable("func_getalluser", `()`);
+    const user = await data.funcTable("func_getalluser", `()`);
     return res.status(200).json(user);
   } catch (error) {
     console.log(error);
@@ -418,7 +419,7 @@ router.post("/getAllUser", verify, async (req, res) => {
 
 router.post("/updateUser", verify, async (req, res) => {
   try {
-    const dbResponse = await apiData.funcTable('func_updateuser',
+    const dbResponse = await data.funcTable('func_updateuser',
       `(
         ${req.body.userId},
         '${req.body.fullName}',
@@ -464,7 +465,7 @@ router.post("/updateUser", verify, async (req, res) => {
 router.post("/deleteUser", verify, async (req, res) => {
   try {
     const { userId } = req.body;
-    const dbResponse = await apiData.funcTable('func_deleteuser',
+    const dbResponse = await data.funcTable('func_deleteuser',
       `(
         ${userId}
       )`
@@ -497,7 +498,7 @@ router.post("/deleteUser", verify, async (req, res) => {
   }
 })
 
-router.post("/recoveryList", verify, async (req, res) => {
+router.get("/recoveryList", verify, async (req, res) => {
   try {
     const filter = {
       search: '',
@@ -514,7 +515,7 @@ router.post("/recoveryList", verify, async (req, res) => {
       filter.sort = req.query.sort.toLowerCase();
     }
 
-    const totalRecord = await apiData.funcTable('func_totalrecoveryuser', `('${filter.search === 'undefined' ? '' : filter.search}')`);
+    const totalRecord = await data.funcTable('func_totalrecoveryuser', `('${filter.search === 'undefined' ? '' : filter.search}')`);
 
     if (totalRecord.status === false) {
       return res.status(400).json({
@@ -531,7 +532,7 @@ router.post("/recoveryList", verify, async (req, res) => {
       pagination = funcPagination(1, limit, totalUserRecovery);
     };
 
-    const dbResponse = await apiData.funcTable('func_getallrecoveryuser',
+    const dbResponse = await data.funcTable('func_getallrecoveryuser',
       `(
         '${filter.search}',
         '${filter.sort}',
@@ -548,7 +549,7 @@ router.post("/recoveryList", verify, async (req, res) => {
     };
 
     const recovery = dbResponse.data;
-    const data = [];
+    const data_ = [];
     for (const item of recovery) {
       const rawData = {
         id: item.id_,
@@ -560,11 +561,11 @@ router.post("/recoveryList", verify, async (req, res) => {
         status: item.status_,
         deletedAt: format(item.deleted_at_, "HH:mm DD/MM/YYYY"),
       }
-      data.push(rawData);
+      data_.push(rawData);
     }
     res.status(200).json({
       status: true,
-      data: data,
+      data: data_,
       totalPage: pagination.totalPage
     })
   } catch (error) {
@@ -578,7 +579,7 @@ router.post("/recoveryList", verify, async (req, res) => {
 
 router.post("/recovery", verify, async (req, res) => {
   try {
-    const dbResponse = await apiData.funcTable('func_recoveryUser',
+    const dbResponse = await data.funcTable('func_recoveryUser',
       `(
         ${req.body.userId}
       )`
@@ -617,7 +618,7 @@ router.post("/createRole", verify, async (req, res) => {
   try {
     const { roleName, status } = req.body;
     const roleNameFormat = roleName.toLowerCase();
-    const dbResponse = await apiData.funcTable('func_insertrole',
+    const dbResponse = await data.funcTable('func_insertrole',
       `(
         '${roleNameFormat}',
         '${status}',
@@ -652,7 +653,7 @@ router.post("/createRole", verify, async (req, res) => {
   }
 })
 
-router.post("/getAllRoles", verify, async (req, res) => {
+router.get("/getAllRoles", verify, async (req, res) => {
   try {
     const filter = {
       search: "",
@@ -672,7 +673,7 @@ router.post("/getAllRoles", verify, async (req, res) => {
       filter.sort = req.query.sort;
     }
 
-    const totalRecord = await apiData.funcTable('func_totalrole', `('${filter.search}', '${filter.status}')`);
+    const totalRecord = await data.funcTable('func_totalrole', `('${filter.search}', '${filter.status}')`);
 
     if (totalRecord.status === false) {
       return res.status(400).json({
@@ -690,7 +691,7 @@ router.post("/getAllRoles", verify, async (req, res) => {
       pagination = funcPagination(1, limit, totalRole);
     };
 
-    const dbResponse = await apiData.funcTable('func_getallrole',
+    const dbResponse = await data.funcTable('func_getallrole',
       `(
         ${pagination.offset},
         ${limit},
@@ -707,7 +708,7 @@ router.post("/getAllRoles", verify, async (req, res) => {
       })
     };
 
-    const data = [];
+    const data_ = [];
     for (const item of dbResponse.data) {
       const rawData = {
         id: item.id_,
@@ -722,13 +723,13 @@ router.post("/getAllRoles", verify, async (req, res) => {
           data.push(rawData);
         }
       } else {
-        data.push(rawData);
+        data_.push(rawData);
       }
     }
 
     res.status(200).json({
       status: true,
-      data: data,
+      data: data_,
       totalPage: pagination.totalPage
     });
   } catch (error) {
@@ -743,7 +744,7 @@ router.post("/getAllRoles", verify, async (req, res) => {
 router.post("/deleteRole", verify, async (req, res) => {
   try {
     const { roleId } = req.body;
-    const dbResponse = await apiData.funcTable('func_deleterole',
+    const dbResponse = await data.funcTable('func_deleterole',
       `(
         ${roleId}
       )`
@@ -773,12 +774,34 @@ router.post("/deleteRole", verify, async (req, res) => {
   }
 })
 
-router.post("/roleDetail/:id", verify, async (req, res) => {
+router.get("/roleDetail/:id", verify, async (req, res) => {
   try {
-    console.log(req.params.id);
+    const dbResponse = await data.funcTable('func_getrole', `(${req.params.id})`);
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: 'Error db'
+      })
+    };
+
+    if(!dbResponse.data[0]) {
+      return res.status(404).json({
+        status: false,
+        msg: 'Role not found!'
+      })
+    };
+
+    const role = {
+      id: dbResponse.data[0].id_,
+      roleName: dbResponse.data[0].rolename_,
+      status: dbResponse.data[0].status_,
+      permission: JSON.parse(JSON.stringify(dbResponse.data[0].permission_))
+    };
+
     return res.status(200).json({
       status: true,
-      data: {},
+      data: role,
     })
   } catch (error) {
     console.log(error);
@@ -789,8 +812,34 @@ router.post("/roleDetail/:id", verify, async (req, res) => {
   }
 });
 
-router.post("/updateRole", verify, async (req, res) => {
+router.post("/roleUpdate", verify, async (req, res) => {
   try {
+    console.log(req.body);
+    const { id, roleName, status, permission } = req.body;
+
+    const dbResponse = await data.funcTable('func_updaterole', 
+      `(
+        ${id},
+        '${roleName}',
+        '${status}', 
+        '${JSON.stringify(permission)}'
+      )`
+    );
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: 'Error db'
+      })
+    };
+
+    if(dbResponse.data[0].func_updaterole === false) {
+      return res.status(400).json({
+        status: false,
+        msg: 'Role not found!'
+      })
+    };
+
     return res.status(200).json({
       status: true,
       msg: "Role has updated!"
@@ -803,11 +852,12 @@ router.post("/updateRole", verify, async (req, res) => {
     })
   }
 })
+
 //End role and permission 
 router.post("/excel", verify, async (req, res) => {
   try {
     const usersArray = [];
-    const dbResponse = await apiData.funcTable('func_printexcel', `()`);
+    const dbResponse = await data.funcTable('func_printexcel', `()`);
 
     for (const item of dbResponse.data) {
       const array = [

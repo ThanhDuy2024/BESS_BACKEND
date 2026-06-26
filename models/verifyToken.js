@@ -13,7 +13,7 @@ const verify = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         //check expire and secret key
         if (!decoded) {
             return res.status(400).json({
@@ -39,7 +39,23 @@ const verify = async (req, res, next) => {
             });
         }
 
-        req.user = user;
+        const userFormat = [
+            {
+                id_: user.data[0].id_,
+                username_: user.data[0].username_,
+                email_: user.data[0].email_,
+                full_name_: user.data[0].full_name_,
+                phone_: user.data[0].phone_,
+                address_: user.data[0].address_,
+                avatar_: user.data[0].avatar_,
+                rolename_: user.data[0].rolename_,
+                permission_: JSON.parse(JSON.stringify(user.data[0].permission_)),
+                status_: user.data[0].status_
+            }
+        ]
+
+        req.user = userFormat;
+        console.log(userFormat)
         next();
     } catch (error) {
         console.log(error);
