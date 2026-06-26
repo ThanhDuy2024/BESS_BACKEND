@@ -321,6 +321,26 @@ router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
     //convert string
     const otp = String(digit);
 
+    const dbResponse = await apiData.funcTable('func_verifyemailotp',
+      `(
+        '${email}'
+      )`
+    );
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    if (dbResponse.data[0].func_verifyemailotp === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Your email or username existed!"
+      })
+    }
+
     cache.set(otp, email);
     const html = `Mã OTP kích hoạt tài khoản của bạn là: <b>${otp}</b> <div>Lưu ý mã OTP chỉ có hiệu lực trong vòng 1 phút</div>`
     sendOtpNodemailer(email, otp, html);
@@ -510,7 +530,7 @@ router.post("/recoveryList", verify, async (req, res) => {
     } else {
       pagination = funcPagination(1, limit, totalUserRecovery);
     };
-  
+
     const dbResponse = await apiData.funcTable('func_getallrecoveryuser',
       `(
         '${filter.search}',
@@ -640,21 +660,21 @@ router.post("/getAllRoles", verify, async (req, res) => {
       sort: "id"
     };
 
-    if(req.query.search) {
+    if (req.query.search) {
       filter.search = req.query.search;
     };
 
-    if(req.query.status) {
+    if (req.query.status) {
       filter.status = req.query.status
     }
 
-    if(req.query.sort) {
+    if (req.query.sort) {
       filter.sort = req.query.sort;
     }
 
     const totalRecord = await apiData.funcTable('func_totalrole', `('${filter.search}', '${filter.status}')`);
 
-    if(totalRecord.status === false) {
+    if (totalRecord.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db"
@@ -664,13 +684,13 @@ router.post("/getAllRoles", verify, async (req, res) => {
     const totalRole = totalRecord.data[0].func_totalrole;
 
     let pagination = {};
-    if(req.query.page) {
+    if (req.query.page) {
       pagination = funcPagination(req.query.page, limit, totalRole);
     } else {
       pagination = funcPagination(1, limit, totalRole);
     };
 
-    const dbResponse = await apiData.funcTable('func_getallrole', 
+    const dbResponse = await apiData.funcTable('func_getallrole',
       `(
         ${pagination.offset},
         ${limit},
@@ -723,6 +743,23 @@ router.post("/getAllRoles", verify, async (req, res) => {
 router.post("/deleteRole", verify, async (req, res) => {
   try {
     const { roleId } = req.body;
+    const dbResponse = await apiData.funcTable('func_deleterole',
+      `(
+        ${roleId}
+      )`
+    );
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    }
+    if (dbResponse.data[0].func_deleterole === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Role not found!"
+      })
+    }
     res.status(200).json({
       status: true,
       msg: "Role has deleted!"
@@ -735,8 +772,38 @@ router.post("/deleteRole", verify, async (req, res) => {
     })
   }
 })
-//End role and permission 
 
+router.post("/roleDetail/:id", verify, async (req, res) => {
+  try {
+    console.log(req.params.id);
+    return res.status(200).json({
+      status: true,
+      data: {},
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(404).json({
+      status: false,
+      message: "Role not found!"
+    })
+  }
+});
+
+router.post("/updateRole", verify, async (req, res) => {
+  try {
+    return res.status(200).json({
+      status: true,
+      msg: "Role has updated!"
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+//End role and permission 
 router.post("/excel", verify, async (req, res) => {
   try {
     const usersArray = [];
@@ -791,6 +858,4 @@ router.post("/excel", verify, async (req, res) => {
     })
   }
 });
-
-
 module.exports = router;
