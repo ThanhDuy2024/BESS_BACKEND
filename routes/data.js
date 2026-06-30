@@ -814,7 +814,6 @@ router.get("/roleDetail/:id", verify, async (req, res) => {
 
 router.post("/roleUpdate", verify, async (req, res) => {
   try {
-    console.log(req.body);
     const { id, roleName, status, permission } = req.body;
 
     const dbResponse = await data.funcTable('func_updaterole', 

@@ -55,7 +55,6 @@ const verify = async (req, res, next) => {
         ]
 
         req.user = userFormat;
-        console.log(userFormat)
         next();
     } catch (error) {
         console.log(error);
