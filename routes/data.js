@@ -9,6 +9,7 @@ const cache = require("../models/core").cache;
 const funcPagination = require("../models/core").funcPagination;
 const capitalizeFirstLetter = require("../models/core").capitalizeFirstLetter;
 const { format } = require('date-and-time');
+const { assign } = require("nodemailer/lib/shared");
 const limit = 10;
 
 router.get("/", (req, res) => {
@@ -611,6 +612,43 @@ router.post("/recovery", verify, async (req, res) => {
     })
   }
 })
+
+//new api delete user recovery
+router.post("/deleteUserRecovery", verify, async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const dbResponse = await data.funcTable('func_deleteuserrecovery',
+      `(
+        ${userId}
+      )`
+    );
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if(dbResponse.data[0].func_deleteuserrecovery === false) {
+      return res.status(404).json({
+        status: false,
+        msg: "User not found!"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "Delete user successful!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
 //End User management logic
 
 //Logic role and permission
@@ -778,14 +816,14 @@ router.get("/roleDetail/:id", verify, async (req, res) => {
   try {
     const dbResponse = await data.funcTable('func_getrole', `(${req.params.id})`);
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: 'Error db'
       })
     };
 
-    if(!dbResponse.data[0]) {
+    if (!dbResponse.data[0]) {
       return res.status(404).json({
         status: false,
         msg: 'Role not found!'
@@ -816,7 +854,7 @@ router.post("/roleUpdate", verify, async (req, res) => {
   try {
     const { id, roleName, status, permission } = req.body;
 
-    const dbResponse = await data.funcTable('func_updaterole', 
+    const dbResponse = await data.funcTable('func_updaterole',
       `(
         ${id},
         '${roleName}',
@@ -825,14 +863,14 @@ router.post("/roleUpdate", verify, async (req, res) => {
       )`
     );
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: 'Error db'
       })
     };
 
-    if(dbResponse.data[0].func_updaterole === false) {
+    if (dbResponse.data[0].func_updaterole === false) {
       return res.status(400).json({
         status: false,
         msg: 'Role not found!'
@@ -851,7 +889,6 @@ router.post("/roleUpdate", verify, async (req, res) => {
     })
   }
 })
-
 //End role and permission 
 router.post("/excel", verify, async (req, res) => {
   try {
