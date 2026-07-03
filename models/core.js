@@ -22,7 +22,6 @@ const funcPagination = (page, limit, totalRecord) => {
         totalPage: totalPage
     }
 };
-
 module.exports = {
     cache,
     capitalizeFirstLetter,
