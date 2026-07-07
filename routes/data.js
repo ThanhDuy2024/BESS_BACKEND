@@ -10,6 +10,7 @@ const funcPagination = require("../models/core").funcPagination;
 const capitalizeFirstLetter = require("../models/core").capitalizeFirstLetter;
 const { format } = require('date-and-time');
 const { assign } = require("nodemailer/lib/shared");
+const mongo = require("../models/db_models");
 const limit = 10;
 
 router.get("/", (req, res) => {
@@ -277,6 +278,13 @@ router.post("/changeUserInfo", verify, async (req, res) => {
     };
 
     const userId = req.user.data[0].id_;
+    if(userId === 50) {
+      return res.status(400).json({
+        status: false,
+        msg: "No permission"
+      })
+    };
+
     const dbResponse = await data.funcTable('func_changeuserinfo',
       `(
         '${actionFormat}',
@@ -890,6 +898,100 @@ router.post("/roleUpdate", verify, async (req, res) => {
   }
 })
 //End role and permission 
+
+//Report logic
+router.post("/calculate", verify, async (req, res) => {
+  try {
+
+    const { date } = req.body;
+
+    const [day, month, year] = date.split("/");
+
+    const formattedDate = `${month}/${day}/${year}`;
+
+    const dbResponse = await mongo.History.findOne({
+      date: formattedDate
+    });
+    if (!dbResponse) {
+      return res.status(400).json({
+        status: false,
+        msg: 'Error db'
+      })
+    };
+
+    const scale = await mongo.Report.findOne()
+
+    const scaleCharge = scale.register[6].scale;
+    const scaleDischarge = scale.register[7].scale;
+
+    const charge = Number((dbResponse.result[dbResponse.result.length - 1][7] * scaleCharge).toFixed(2));
+    const discharge = Number((dbResponse.result[dbResponse.result.length - 1][8] * scaleCharge).toFixed(2));
+
+    return res.status(200).json({
+      status: true,
+      msg: "Successful",
+      data: {
+        charge: charge,
+        discharge: discharge
+      }
+    })
+
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+});
+
+router.post("/getAllReport", verify, async (req, res) => {
+  try {
+    const { date } = req.body;
+
+    const [day, month, year] = date.split("/");
+
+    const formattedDate = `${month}/${day}/${year}`;
+
+    const dbResponse = await mongo.History.findOne(
+      { date: formattedDate }
+    );
+
+    if (!dbResponse) {
+      return res.status(400).json({
+        status: false,
+        msg: 'Error db'
+      })
+    };
+
+    const arrayData = []
+    for (const Item1 of dbResponse.result) {
+      const [time, soc, soh, volt, current, grid, load, charge, discharge, totalCharge, totalDischarge] = Item1;
+      const obj = { time, soc, soh, volt, current, grid, load, charge, discharge, totalCharge, totalDischarge };
+      obj.soc = Number(obj.soc);
+      obj.soh = Number(obj.soh);
+      obj.volt = Number(obj.volt).toFixed(2);
+      obj.current = Number(obj.current).toFixed(2);
+      obj.grid = Number(obj.grid).toFixed(2);
+      obj.load = Number(obj.load).toFixed(2);
+      obj.charge = Number(obj.charge).toFixed(2);
+      obj.discharge = Number(obj.discharge).toFixed(2);
+      arrayData.push(obj);
+    }
+    return res.status(200).json({
+      status: true,
+      msg: "Successful",
+      data: arrayData
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+
 router.post("/excel", verify, async (req, res) => {
   try {
     const usersArray = [];
@@ -944,4 +1046,5 @@ router.post("/excel", verify, async (req, res) => {
     })
   }
 });
+//End report logic
 module.exports = router;
