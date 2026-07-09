@@ -992,6 +992,66 @@ router.post("/getAllReport", verify, async (req, res) => {
   }
 })
 
+router.get("/getAllReportPagination", verify, async (req, res) => {
+
+  try {
+    const date = req.query.date;
+    const [day, month, year] = date.split("/");
+    const formattedDate = `${month}/${day}/${year}`;
+
+    const page = Number(req.query.page) || 1;
+
+    const dbResponse = await mongo.History.findOne(
+      { date: formattedDate },
+    )
+
+    const total = dbResponse.result.length;
+
+    let pagination = {};
+    if (req.query.page) {
+      pagination = funcPagination(req.query.page, limit, total);
+    } else {
+      pagination = funcPagination(1, limit, total);
+    };
+    
+    const pageData = dbResponse.result.slice(pagination.offset, pagination.offset + limit);
+
+    if (!dbResponse) {
+      return res.status(400).json({
+        status: false,
+        msg: 'Error db'
+      })
+    };
+
+    const arrayData = []
+    for (const Item1 of pageData) {
+      const [time, soc, soh, volt, current, grid, load, charge, discharge, totalCharge, totalDischarge] = Item1;
+      const obj = { time, soc, soh, volt, current, grid, load, charge, discharge, totalCharge, totalDischarge };
+      obj.soc = Number(obj.soc);
+      obj.soh = Number(obj.soh);
+      obj.volt = Number(obj.volt).toFixed(2);
+      obj.current = Number(obj.current).toFixed(2);
+      obj.grid = Number(obj.grid).toFixed(2);
+      obj.load = Number(obj.load).toFixed(2);
+      obj.charge = Number(obj.charge).toFixed(2);
+      obj.discharge = Number(obj.discharge).toFixed(2);
+      arrayData.push(obj);
+    }
+    return res.status(200).json({
+      status: true,
+      msg: "Successful",
+      data: arrayData,
+      totalPage: pagination.totalPage
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+
 router.post("/excel", verify, async (req, res) => {
   try {
     const usersArray = [];
