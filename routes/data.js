@@ -8,6 +8,7 @@ const XlsxPopulate = require('xlsx-populate');
 const cache = require("../models/core").cache;
 const funcPagination = require("../models/core").funcPagination;
 const capitalizeFirstLetter = require("../models/core").capitalizeFirstLetter;
+const formatDate = require('../models/core').formatDate;
 const { format } = require('date-and-time');
 const { assign } = require("nodemailer/lib/shared");
 const mongo = require("../models/db_models");
@@ -278,7 +279,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
     };
 
     const userId = req.user.data[0].id_;
-    if(userId === 50) {
+    if (userId === 50) {
       return res.status(400).json({
         status: false,
         msg: "No permission"
@@ -638,7 +639,7 @@ router.post("/deleteUserRecovery", verify, async (req, res) => {
       })
     };
 
-    if(dbResponse.data[0].func_deleteuserrecovery === false) {
+    if (dbResponse.data[0].func_deleteuserrecovery === false) {
       return res.status(404).json({
         status: false,
         msg: "User not found!"
@@ -1013,7 +1014,7 @@ router.get("/getAllReportPagination", verify, async (req, res) => {
     } else {
       pagination = funcPagination(1, limit, total);
     };
-    
+
     const pageData = dbResponse.result.slice(pagination.offset, pagination.offset + limit);
 
     if (!dbResponse) {
@@ -1106,5 +1107,144 @@ router.post("/excel", verify, async (req, res) => {
     })
   }
 });
+
+router.post("/export-excel", verify, async (req, res) => {
+  try {
+    const date = req.body.date;
+    const newDate = formatDate(date);
+    const reports = await mongo.Report.findOne({
+      deviceid: "N150FL4L2C072590"
+    });
+
+    //E7
+    const chargePerHoursScale = reports.register[6].scale;
+    //E8
+    const dischargePerHoursScale = reports.register[7].scale;
+
+    const history = await mongo.History.findOne({
+      deviceid: "N150FL4L2C072590",
+      date: newDate
+    });
+
+    const chargePerHoursHistory = history.result[history.result.length - 1][7];
+    const dischargePerHoursHistory = history.result[history.result.length - 1][8];
+
+    const obj = {
+      totalChargeToDay: (Number(chargePerHoursHistory) * Number(chargePerHoursScale)).toFixed(2),
+      totalDischargeToDay: (Number(dischargePerHoursHistory) * Number(dischargePerHoursScale)).toFixed(2),
+      arrayData: []
+    }
+
+    let scale = {};
+    for (const item of reports.register) {
+      scale = {
+        ...scale,
+        [item.id]: Number(item.scale)
+      }
+    };
+
+    for (const item of history.result) {
+      const [time, soc, soh, volt, current, grid, load, charge, discharge] = item;
+      const tmpObj = { time, soc, soh, volt, current, grid, load, charge, discharge }
+      tmpObj.soc = Number(tmpObj.soc);
+      tmpObj.soh = Number(tmpObj.soh);
+      tmpObj.volt = (Number(tmpObj.volt) * scale["E3"]);
+      tmpObj.current = (Number(tmpObj.current) * scale["E4"]);
+      tmpObj.grid = (Number(tmpObj.grid) * scale["E5"]);
+      tmpObj.load = (Number(tmpObj.load) * scale["E6"]);
+      tmpObj.charge = (Number(tmpObj.charge) * scale["E7"]);
+      tmpObj.discharge = (Number(tmpObj.discharge) * scale["E8"]);
+      obj.arrayData.push(tmpObj)
+    }
+
+    const workbook = await XlsxPopulate.fromBlankAsync();
+    const sheet = workbook.sheet(0);
+
+    sheet.range("A1:I1")
+      .merged(true)
+      .value(`BÁO CÁO ${date}`)
+      .style({
+        bold: true,
+        fontSize: 18,
+        horizontalAlignment: "center",
+        verticalAlignment: "center",
+      });
+
+    sheet.cell("A2").value("Tổng lượng xạc hôm nay");
+    sheet.cell("B2").value(Number(obj.totalChargeToDay));
+    sheet.cell("A3").value("Tổng lượng xả hôm nay");
+    sheet.cell("B3").value(Number(obj.totalDischargeToDay));
+
+    const headers = [
+      "Time",
+      "SOC",
+      "SOH",
+      "Voltage",
+      "Current",
+      "Grid",
+      "Load",
+      "Charge",
+      "Discharge",
+    ];
+
+    headers.forEach((header, index) => {
+      sheet
+        .cell(6, index + 1)
+        .value(header)
+        .style({
+          bold: true,
+          fill: "D9EAD3",
+          horizontalAlignment: "center",
+        });
+    });
+
+    obj.arrayData.forEach((item, rowIndex) => {
+      const row = rowIndex + 7;
+
+      sheet.cell(row, 1).value(item.time);
+      sheet.cell(row, 2).value(item.soc);
+      sheet.cell(row, 3).value(item.soh);
+      sheet.cell(row, 4).value(item.volt);
+      sheet.cell(row, 5).value(item.current);
+      sheet.cell(row, 6).value(item.grid);
+      sheet.cell(row, 7).value(item.load);
+      sheet.cell(row, 8).value(item.charge);
+      sheet.cell(row, 9).value(item.discharge);
+    });
+
+    // Tự động chỉnh độ rộng cột
+    sheet.column("A").width(15);
+    sheet.column("B").width(15);
+    sheet.column("C").width(10);
+    sheet.column("D").width(12);
+    sheet.column("E").width(12);
+    sheet.column("F").width(10);
+    sheet.column("G").width(10);
+    sheet.column("H").width(12);
+    sheet.column("I").width(12);
+
+    //await workbook.toFileAsync("./excel/Battery_Report_ToDay.xlsx");
+
+    const buffer = await workbook.outputAsync();
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="Battery_Report_ToDay.xlsx"'
+    );
+
+    res.send(buffer);
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      code: "error",
+      msg: "Bad request"
+    })
+  }
+})
 //End report logic
 module.exports = router;
