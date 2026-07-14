@@ -3,8 +3,14 @@ const express = require("express");
 const app = express();
 const data = require("./routes/data");
 const dotenv = require("dotenv");
+const path = require("path");
 dotenv.config();
 const PORT = 3001;
+
+app.use(
+    "/uploads",
+    express.static(path.join(__dirname, "uploads"))
+);
 
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ limit: "100mb", extended: true }));

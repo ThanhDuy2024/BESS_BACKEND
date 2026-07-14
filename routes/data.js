@@ -12,6 +12,7 @@ const formatDate = require('../models/core').formatDate;
 const { format } = require('date-and-time');
 const { assign } = require("nodemailer/lib/shared");
 const mongo = require("../models/db_models");
+const { upload } = require("../models/core");
 const limit = 10;
 
 router.get("/", (req, res) => {
@@ -906,11 +907,10 @@ router.post("/calculate", verify, async (req, res) => {
 
     const { date } = req.body;
 
-    const [day, month, year] = date.split("/");
-
-    const formattedDate = `${month}/${day}/${year}`;
+    const formattedDate = formatDate(date);
 
     const dbResponse = await mongo.History.findOne({
+      deviceid: "N150FL4L2C072590",
       date: formattedDate
     });
     if (!dbResponse) {
@@ -920,7 +920,9 @@ router.post("/calculate", verify, async (req, res) => {
       })
     };
 
-    const scale = await mongo.Report.findOne()
+    const scale = await mongo.Report.findOne({
+      deviceid: "N150FL4L2C072590"
+    })
 
     const scaleCharge = scale.register[6].scale;
     const scaleDischarge = scale.register[7].scale;
@@ -952,10 +954,10 @@ router.post("/getAllReport", verify, async (req, res) => {
 
     const [day, month, year] = date.split("/");
 
-    const formattedDate = `${month}/${day}/${year}`;
+    const formattedDate = formatDate(date);
 
     const dbResponse = await mongo.History.findOne(
-      { date: formattedDate }
+      { deviceid: "N150FL4L2C072590", date: formattedDate }
     );
 
     if (!dbResponse) {
@@ -965,20 +967,33 @@ router.post("/getAllReport", verify, async (req, res) => {
       })
     };
 
+    const reports = await mongo.Report.findOne({
+      deviceid: "N150FL4L2C072590"
+    });
+
+    let scale = {};
+    for (const item of reports.register) {
+      scale = {
+        ...scale,
+        [item.id]: Number(item.scale),
+      }
+    };
+
     const arrayData = []
     for (const Item1 of dbResponse.result) {
-      const [time, soc, soh, volt, current, grid, load, charge, discharge, totalCharge, totalDischarge] = Item1;
-      const obj = { time, soc, soh, volt, current, grid, load, charge, discharge, totalCharge, totalDischarge };
+      const [time, soc, soh, volt, current, grid, load, charge, discharge] = Item1;
+      const obj = { time, soc, soh, volt, current, grid, load, charge, discharge };
       obj.soc = Number(obj.soc);
       obj.soh = Number(obj.soh);
-      obj.volt = Number(obj.volt).toFixed(2);
-      obj.current = Number(obj.current).toFixed(2);
-      obj.grid = Number(obj.grid).toFixed(2);
-      obj.load = Number(obj.load).toFixed(2);
-      obj.charge = Number(obj.charge).toFixed(2);
-      obj.discharge = Number(obj.discharge).toFixed(2);
+      obj.volt = Number(Number(obj.volt) * scale["E3"]).toFixed(2);
+      obj.current = Number(Number(obj.current) * scale["E4"]).toFixed(2);
+      obj.grid = Number(Number(obj.grid) * scale["E5"]).toFixed(2);
+      obj.load = Number(Number(obj.load) * scale["E6"]).toFixed(2);
+      obj.charge = Number(Number(obj.charge) * scale["E7"]).toFixed(2);
+      obj.discharge = Number(Number(obj.discharge) * scale["E8"]).toFixed(2);
       arrayData.push(obj);
     }
+
     return res.status(200).json({
       status: true,
       msg: "Successful",
@@ -1015,7 +1030,7 @@ router.get("/getAllReportPagination", verify, async (req, res) => {
       pagination = funcPagination(1, limit, total);
     };
 
-    const pageData = dbResponse.result.slice(pagination.offset, pagination.offset + limit);
+    const pageData = dbResponse.result.reverse().slice(pagination.offset, pagination.offset + limit);
 
     if (!dbResponse) {
       return res.status(400).json({
@@ -1038,6 +1053,7 @@ router.get("/getAllReportPagination", verify, async (req, res) => {
       obj.discharge = Number(obj.discharge).toFixed(2);
       arrayData.push(obj);
     }
+
     return res.status(200).json({
       status: true,
       msg: "Successful",
@@ -1053,62 +1069,7 @@ router.get("/getAllReportPagination", verify, async (req, res) => {
   }
 })
 
-router.post("/excel", verify, async (req, res) => {
-  try {
-    const usersArray = [];
-    const dbResponse = await data.funcTable('func_printexcel', `()`);
-
-    for (const item of dbResponse.data) {
-      const array = [
-        item.id_,
-        item.username_,
-        item.full_name_,
-        item.email_,
-        item.phone_ === null ? "Null" : item.phone_,
-        item.address_ === null ? "Null" : item.phone_,
-        item.role_,
-        item.status_
-      ]
-
-      usersArray.push(array);
-    };
-
-    XlsxPopulate.fromBlankAsync().then(workbook => {
-      const sheet = workbook.sheet(0);
-      const data = [
-        ["Id", "User name", "Full Name", "Email", "Phone", "Address", "Role", "Status"],
-        ...usersArray
-      ];
-
-      sheet.cell("A1").value(data);
-
-      sheet.range("A1:H1").style({
-        bold: true,
-        fill: "4472C4",       // màu nền xanh
-        fontColor: "FFFFFF",  // chữ trắng
-        horizontalAlignment: "center"
-      });
-
-      sheet.range(`A2:A${2 + usersArray.length}`).style({
-        bold: true
-      })
-      return workbook.toFileAsync("./excel/users.xlsx");
-    })
-
-    res.status(200).json({
-      status: true,
-      msg: "Excel is render"
-    })
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({
-      status: false,
-      msg: "Bad request"
-    })
-  }
-});
-
-router.post("/export-excel", verify, async (req, res) => {
+router.post("/export-excel-today", verify, async (req, res) => {
   try {
     const date = req.body.date;
     const newDate = formatDate(date);
@@ -1162,7 +1123,7 @@ router.post("/export-excel", verify, async (req, res) => {
 
     sheet.range("A1:I1")
       .merged(true)
-      .value(`BÁO CÁO ${date}`)
+      .value(`BÁO CÁO NGÀY ${date}`)
       .style({
         bold: true,
         fontSize: 18,
@@ -1170,21 +1131,21 @@ router.post("/export-excel", verify, async (req, res) => {
         verticalAlignment: "center",
       });
 
-    sheet.cell("A2").value("Tổng lượng xạc hôm nay");
+    sheet.cell("A2").value("Tổng lượng sạc hôm nay").style({ bold: true });
     sheet.cell("B2").value(Number(obj.totalChargeToDay));
-    sheet.cell("A3").value("Tổng lượng xả hôm nay");
+    sheet.cell("A3").value("Tổng lượng xả hôm nay").style({ bold: true });
     sheet.cell("B3").value(Number(obj.totalDischargeToDay));
 
     const headers = [
-      "Time",
+      "Thời gian (Time)",
       "SOC",
       "SOH",
-      "Voltage",
-      "Current",
-      "Grid",
-      "Load",
-      "Charge",
-      "Discharge",
+      "Điện áp (Voltage)",
+      "Dòng điện (Current)",
+      "Lượng sạc từ lưới điện (Grid)",
+      "Xả vào tải (Load)",
+      "Sản lượng sạc (Charge)",
+      "Sản lượng xả (Discharge)",
     ];
 
     headers.forEach((header, index) => {
@@ -1213,15 +1174,15 @@ router.post("/export-excel", verify, async (req, res) => {
     });
 
     // Tự động chỉnh độ rộng cột
-    sheet.column("A").width(15);
-    sheet.column("B").width(15);
+    sheet.column("A").width(25);
+    sheet.column("B").width(10);
     sheet.column("C").width(10);
-    sheet.column("D").width(12);
-    sheet.column("E").width(12);
-    sheet.column("F").width(10);
-    sheet.column("G").width(10);
-    sheet.column("H").width(12);
-    sheet.column("I").width(12);
+    sheet.column("D").width(20);
+    sheet.column("E").width(20);
+    sheet.column("F").width(30);
+    sheet.column("G").width(20);
+    sheet.column("H").width(23);
+    sheet.column("I").width(30);
 
     //await workbook.toFileAsync("./excel/Battery_Report_ToDay.xlsx");
 
@@ -1247,4 +1208,40 @@ router.post("/export-excel", verify, async (req, res) => {
   }
 })
 //End report logic
+
+//Upload avatar 
+router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) => {
+  try {
+    const linkImage = `http://bess1.local:3001/uploads/user/${req.file.originalname}`
+    console.log(linkImage)
+    const userId = req.user[0].id_;
+    const dbResponse = await data.funcTable('func_updateavt',
+      `(
+        ${userId},
+        '${linkImage}'
+      )`
+    )
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "error db!"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "Update Avatar Success"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Update Avatar Error"
+    })
+  }
+
+}
+);
+//End upload avatar
 module.exports = router;

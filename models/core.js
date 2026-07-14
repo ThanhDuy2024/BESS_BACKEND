@@ -1,4 +1,6 @@
 const NodeCache = require("node-cache");
+const multer = require("multer");
+const path = require("path");
 
 const cache = new NodeCache({
     stdTTL: 60, //limit 1 min
@@ -29,9 +31,23 @@ const formatDate = (date) => {
     return formattedDate;
 };
 
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/user");
+    },
+
+    filename: (req, file, cb) => {
+        cb(
+            null,file.originalname
+        );
+    }
+});
+
+const upload = multer({ storage });
 module.exports = {
     cache,
     capitalizeFirstLetter,
     funcPagination,
-    formatDate
+    formatDate,
+    upload
 };
