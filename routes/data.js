@@ -1212,7 +1212,7 @@ router.post("/export-excel-today", verify, async (req, res) => {
 //Upload avatar 
 router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) => {
   try {
-    const linkImage = `http://bess1.local:3001/uploads/user/${req.file.originalname}`
+    const linkImage = `http://bess2.local:3001/uploads/user/${req.file.originalname}`
     console.log(linkImage)
     const userId = req.user[0].id_;
     const dbResponse = await data.funcTable('func_updateavt',
@@ -1244,4 +1244,407 @@ router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) =
 }
 );
 //End upload avatar
+
+//BMS LOGIC
+router.post("/createRack", verify, async (req, res) => {
+  try {
+    const { rackName, model, brand } = req.body;
+
+    const getAllRack = await data.funcTable('func_getallrack', `()`);
+
+    if (getAllRack.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "error db"
+      })
+    };
+
+    if (getAllRack.data.length === 0) {
+      const startRackAddress = 100;
+      const obj = {
+        rackName: rackName,
+        model: model,
+        brand: brand,
+        startRackAddress: startRackAddress,
+        template: {
+          status: {
+            register: "100-1",
+            scale: 0,
+            offset: 0,
+            type: "word"
+          },
+
+          voltage: {
+            register: "115-1",
+            scale: 0.1,
+            offset: 0,
+            type: "word"
+          },
+
+          current: {
+            register: "116-1",
+            scale: 0.1,
+            offset: -3200,
+            type: "word"
+          },
+
+          temperature: {
+            register: "117-1",
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+
+          soc: {
+            register: "118-1",
+            scale: 1,
+            offset: 0,
+            type: "word"
+          },
+
+          soh: {
+            register: "119-1",
+            scale: 1,
+            offset: 0,
+            type: "word"
+          },
+
+          maximumCellVoltage: {
+            register: "123-1",
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+
+          minimumCellVoltage: {
+            register: "125-1",
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+
+          maximumCellTemperature: {
+            register: "127-1",
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+
+          minimumCellTemperature: {
+            register: "129-1",
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+        }
+      }
+      const createRack = await data.funcTable('func_createrack',
+        `(
+          '${obj.rackName}',
+          '${obj.model}',
+          '${obj.brand}',
+          ${startRackAddress},
+          '${JSON.stringify(obj.template)}'
+        )`
+      )
+
+      if (createRack.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db",
+        })
+      };
+
+      if (createRack.data[0].func_createrack === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "Rack name is existed!",
+        })
+      }
+    } else if (getAllRack.data.length !== 0) {
+      const startRackAddress = getAllRack.data[getAllRack.data.length - 1].start_rack_address_ + 3000;
+      const obj = {
+        rackName: rackName,
+        model: model,
+        brand: brand,
+        startRackAddress: startRackAddress,
+        template: {
+          status: {
+            register: `${startRackAddress}-1`,
+            scale: 0,
+            offset: 0,
+            type: "word"
+          },
+          voltage: {
+            register: `${startRackAddress + 15}-1`,
+            scale: 0.1,
+            offset: 0,
+            type: "word"
+          },
+          current: {
+            register: `${startRackAddress + 16}-1`,
+            scale: 0.1,
+            offset: -3200,
+            type: "word"
+          },
+          temperature: {
+            register: `${startRackAddress + 17}-1`,
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+          soc: {
+            register: `${startRackAddress + 18}-1`,
+            scale: 1,
+            offset: 0,
+            type: "word"
+          },
+          soh: {
+            register: `${startRackAddress + 19}-1`,
+            scale: 1,
+            offset: 0,
+            type: "word"
+          },
+          maximumCellVoltage: {
+            register: `${startRackAddress + 23}-1`,
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+
+          minimumCellVoltage: {
+            register: `${startRackAddress + 25}-1`,
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+
+          maximumCellTemperature: {
+            register: `${startRackAddress + 27}-1`,
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+
+          minimumCellTemperature: {
+            register: `${startRackAddress + 29}-1`,
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+        }
+      };
+
+      const createRack = await data.funcTable('func_createrack',
+        `(
+          '${obj.rackName}',
+          '${obj.model}',
+          '${obj.brand}',
+          ${startRackAddress},
+          '${JSON.stringify(obj.template)}'
+        )`
+      )
+
+      if (createRack.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db",
+        })
+      };
+
+      if (createRack.data[0].func_createrack === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "Rack name is existed!",
+        })
+      }
+    }
+
+    res.status(200).json({
+      status: true,
+      msg: "Rack has created!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+});
+
+router.post("/createModule", async (req, res) => {
+  try {
+    const { rackId, moduleName, totalCells } = req.body;
+
+    const getModule = await data.funcTable('func_getmodule',
+      `(
+        ${rackId}
+      )`
+    );
+
+    if (getModule.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    if (getModule.data.length === 0) {
+      return res.status(404).json({
+        status: false,
+        msg: "Rack not found"
+      })
+    };
+
+    if (getModule.data[getModule.data.length - 1].start_cell_address_ === null) {
+      const startCellAddress = getModule.data[getModule.data.length - 1].start_rack_address_ + 91;
+      const obj = {
+        rackId: rackId,
+        moduleName: moduleName,
+        startCellAddress: startCellAddress,
+        totalCells: totalCells,
+        cells: [],
+      }
+
+      for (let i = startCellAddress; i <=  (startCellAddress + totalCells) - 1; i++) {
+        obj.cells.push({
+          cellVoltage: {
+            register: `${i}-1`,
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+          cellTemperature: {
+            register: `${i + 700}-1`,
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+          cellSoc: {
+            register: `${i + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          },
+          cellSoh: {
+            register: `${i + 700 + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          }
+        })
+      }
+      const createModule = await data.funcTable('func_createmodule',
+        `(
+          ${obj.rackId},
+          '${obj.moduleName}',
+          ${obj.startCellAddress},
+          ${obj.totalCells},
+          '${JSON.stringify(obj.cells)}'
+        )`
+      )
+
+      if (createModule.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db"
+        })
+      };
+
+      if (createModule.data[0].func_createmodule === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "Module existed!"
+        })
+      }
+    } else if (getModule.data[getModule.data.length - 1].start_cell_address_ !== null) {
+      const module = getModule.data[getModule.data.length - 1]
+      const startCellAddress = module.start_cell_address_ + module.total_cells_ + 1;
+
+      const currentTotalCellInRack = await data.funcTable('func_totalcell', 
+        `(
+          ${rackId}
+        )`
+      )
+      const checkAddress = currentTotalCellInRack.data[0].func_totalcell + totalCells;
+
+      if(checkAddress > 700) {
+        return res.status(400).json({
+          status: false,
+          msg: "Cell full"
+        })
+      };
+
+      const obj = {
+        rackId: rackId,
+        moduleName: moduleName,
+        startCellAddress: startCellAddress,
+        totalCells: totalCells,
+        cells: [],
+      }
+
+      for(let i = startCellAddress; i <= (startCellAddress + totalCells) - 1; i++) {
+        obj.cells.push({
+          cellVoltage: {
+            register: `${i}-1`,
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+          cellTemperature: {
+            register: `${i + 700}-1`,
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+          cellSoc: {
+            register: `${i + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          },
+          cellSoh: {
+            register: `${i + 700 + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          }
+        });
+      };
+
+      const createModule = await data.funcTable('func_createmodule',
+        `(
+          ${obj.rackId},
+          '${obj.moduleName}',
+          ${obj.startCellAddress},
+          ${obj.totalCells},
+          '${JSON.stringify(obj.cells)}'
+        )`
+      )
+
+      if (createModule.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db"
+        })
+      };
+
+      if (createModule.data[0].func_createmodule === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "Module existed!"
+        })
+      }
+    }
+
+    res.status(200).json({
+      status: true,
+      msg: "Module has create!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+});
+//BMS LOGIC 
 module.exports = router;
