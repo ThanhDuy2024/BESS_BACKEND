@@ -1212,7 +1212,7 @@ router.post("/export-excel-today", verify, async (req, res) => {
 //Upload avatar 
 router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) => {
   try {
-    const linkImage = `http://bess2.local:3001/uploads/user/${req.file.originalname}`
+    const linkImage = `http://61.28.230.132:10001/uploads/user/${req.file.originalname}`
     console.log(linkImage)
     const userId = req.user[0].id_;
     const dbResponse = await data.funcTable('func_updateavt',
@@ -1473,7 +1473,7 @@ router.post("/createRack", verify, async (req, res) => {
   }
 });
 
-router.post("/createModule", async (req, res) => {
+router.post("/createModule", verify, async (req, res) => {
   try {
     const { rackId, moduleName, totalCells } = req.body;
 
@@ -1646,5 +1646,28 @@ router.post("/createModule", async (req, res) => {
     })
   }
 });
-//BMS LOGIC 
+
+router.get("/getAllRackInfo", verify, async (req, res) => {
+  try {
+    const dbResponse = await data.funcTable('func_getallrackinfo', '()');
+    
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "error db"
+      })
+    };
+    res.status(200).json({
+      status: true,
+      data: dbResponse.data
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
+//BMS LOGIC
 module.exports = router;
