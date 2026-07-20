@@ -136,7 +136,7 @@ router.post("/renderOtp", async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 
 router.post("/verifyOtp", async (req, res) => {
   try {
@@ -159,7 +159,7 @@ router.post("/verifyOtp", async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 
 router.post("/changePasswordWithOtp", async (req, res) => {
   try {
@@ -200,7 +200,7 @@ router.post("/changePasswordWithOtp", async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 //End forgot password
 
 //change password and change user infor
@@ -265,7 +265,7 @@ router.post("/changePassword", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 
 router.post("/changeUserInfo", verify, async (req, res) => {
   try {
@@ -320,7 +320,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
       msg: "Change info error"
     })
   }
-})
+});
 //end change password and change user infor
 
 //User management logic
@@ -413,7 +413,7 @@ router.post("/createUser", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.post("/getAllUser", verify, async (req, res) => {
   try {
@@ -471,7 +471,7 @@ router.post("/updateUser", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.post("/deleteUser", verify, async (req, res) => {
   try {
@@ -507,7 +507,7 @@ router.post("/deleteUser", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.get("/recoveryList", verify, async (req, res) => {
   try {
@@ -586,7 +586,7 @@ router.get("/recoveryList", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.post("/recovery", verify, async (req, res) => {
   try {
@@ -621,7 +621,7 @@ router.post("/recovery", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 //new api delete user recovery
 router.post("/deleteUserRecovery", verify, async (req, res) => {
@@ -658,7 +658,7 @@ router.post("/deleteUserRecovery", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 //End User management logic
 
 //Logic role and permission
@@ -699,7 +699,7 @@ router.post("/createRole", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.get("/getAllRoles", verify, async (req, res) => {
   try {
@@ -787,7 +787,7 @@ router.get("/getAllRoles", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.post("/deleteRole", verify, async (req, res) => {
   try {
@@ -820,7 +820,7 @@ router.post("/deleteRole", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.get("/roleDetail/:id", verify, async (req, res) => {
   try {
@@ -898,7 +898,7 @@ router.post("/roleUpdate", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 //End role and permission 
 
 //Report logic
@@ -1006,7 +1006,7 @@ router.post("/getAllReport", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.get("/getAllReportPagination", verify, async (req, res) => {
 
@@ -1067,7 +1067,7 @@ router.get("/getAllReportPagination", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
 
 router.post("/export-excel-today", verify, async (req, res) => {
   try {
@@ -1206,13 +1206,13 @@ router.post("/export-excel-today", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 //End report logic
 
 //Upload avatar 
 router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) => {
   try {
-    const linkImage = `http://61.28.230.132:10001/uploads/user/${req.file.originalname}`
+    const linkImage = `http://bess2.local:3001/uploads/user/${req.file.originalname}`
     console.log(linkImage)
     const userId = req.user[0].id_;
     const dbResponse = await data.funcTable('func_updateavt',
@@ -1245,7 +1245,33 @@ router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) =
 );
 //End upload avatar
 
+
 //BMS LOGIC
+router.get("/getAllRackInfo", verify, async (req, res) => {
+  try {
+    const dbResponse = await data.funcTable('func_getallrackinfo', '()');
+    
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "error db"
+      })
+    };
+    res.status(200).json({
+      status: true,
+      data: dbResponse.data
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+});
+//end bms logic
+
+//BMS management logic
 router.post("/createRack", verify, async (req, res) => {
   try {
     const { rackName, model, brand } = req.body;
@@ -1460,9 +1486,21 @@ router.post("/createRack", verify, async (req, res) => {
       }
     }
 
+    const getRackWhenCreated = await data.funcTable('func_getrackwhencreated', '()');
+
+    if(getRackWhenCreated.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    }
+
+    const rack = getRackWhenCreated.data[0];
+    console.log(rack);
     res.status(200).json({
       status: true,
-      msg: "Rack has created!"
+      msg: "Rack has created!",
+      data: rack
     })
   } catch (error) {
     console.log(error);
@@ -1647,16 +1685,17 @@ router.post("/createModule", verify, async (req, res) => {
   }
 });
 
-router.get("/getAllRackInfo", verify, async (req, res) => {
+router.get("/getAllRack", verify, async (req, res) => {
   try {
-    const dbResponse = await data.funcTable('func_getallrackinfo', '()');
-    
+    const dbResponse = await data.funcTable(`func_getAllRack`, '()');
+
     if(dbResponse.status === false) {
       return res.status(400).json({
         status: false,
-        msg: "error db"
+        msg: "Error db"
       })
     };
+
     res.status(200).json({
       status: true,
       data: dbResponse.data
@@ -1665,9 +1704,9 @@ router.get("/getAllRackInfo", verify, async (req, res) => {
     console.log(error);
     res.status(400).json({
       status: false,
-      msg: "Bad request!"
+      msg: "Bad request"
     })
   }
 })
-//BMS LOGIC
+//BMS management logic
 module.exports = router;

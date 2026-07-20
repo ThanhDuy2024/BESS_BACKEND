@@ -30,8 +30,6 @@ function read_db(select, table, value_db, Callback) {
       Callback(result);
     });
   }
-
-
 }
 
 //update controller set setting ='{"mode":1,"setting":{"on":1}}' where name='relay_1'{\"mode\":1,\"setting\":{\"on\":0}}
