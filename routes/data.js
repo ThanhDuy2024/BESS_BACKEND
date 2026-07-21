@@ -1685,6 +1685,88 @@ router.post("/createModule", verify, async (req, res) => {
   }
 });
 
+router.post("/v2/createModule", verify, async (req, res) => {
+  try {
+    const { rackId, totalModules, totalCells } = req.body;
+    const realTotalCell = 700;
+    if (totalModules * totalCells > 700) {
+      return res.status(400).json({
+        status: false,
+        msg: "Cell full"
+      })
+    }
+    const getModule = await data.funcTable('func_getRack',
+      `(
+        ${rackId}
+      )`
+    );
+    let startAddress = getModule.data[0].start_rack_address_ + 91
+    let ans;
+    for (let i = 1; i <= totalModules; i++) {
+      const obj = {
+        rackId: rackId,
+        moduleName: `Module 0${i}`,
+        startCellAddress: startAddress,
+        totalCells: totalCells,
+        cells: [],
+      }
+      for (let j = startAddress; j <= startAddress + totalCells - 1; j++) {
+        obj.cells.push({
+          cellVoltage: {
+            register: `${j}-1`,
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+          cellTemperature: {
+            register: `${j + 700}-1`,
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+          cellSoc: {
+            register: `${j + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          },
+          cellSoh: {
+            register: `${j + 700 + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          }
+        });
+      }
+      startAddress = startAddress + totalCells + 1;
+      const createModule = await data.funcTable('func_createmodule',
+        `(
+          ${obj.rackId},
+          '${obj.moduleName}',
+          ${obj.startCellAddress},
+          ${obj.totalCells},
+          '${JSON.stringify(obj.cells)}'
+        )`
+      )
+
+      if (createModule.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db"
+        })
+      };
+    }
+    return res.status(200).json({
+      status: true,
+      msg: "Rack has created!",
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+});
+
 router.get("/getAllRack", verify, async (req, res) => {
   try {
     const dbResponse = await data.funcTable(`func_getAllRack`, '()');
