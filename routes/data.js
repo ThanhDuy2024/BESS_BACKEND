@@ -1512,7 +1512,6 @@ router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) =
 );
 //End upload avatar
 
-
 //BMS LOGIC
 router.get("/getAllRackInfo", verify, async (req, res) => {
   try {
@@ -2026,7 +2025,123 @@ router.post("/v2/createRack", verify, async (req, res) => {
       msg: "Bad request!"
     })
   }
-})
+});
+
+router.get("/rackDetail/:id", verify, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const dbResponse = await data.funcTable('func_getrack', `(${id})`);
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+    res.status(200).json({
+      status: true,
+      data: dbResponse.data[0]
+    })
+  } catch (error) {
+    console(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+});
+
+router.post("/editRack", verify, async (req, res) => {
+  try {
+    const { 
+      rackId, 
+      rackName, 
+      model, 
+      brand, 
+      voltage, 
+      current, 
+      temperature,
+      soc,
+      soh,
+      maximumCellVoltage,
+      minimumCellVoltage,
+      maximumCellTemperature,
+      minimumCellTemperature
+    } = req.body;
+
+    const template = {
+      voltage: voltage,
+      current: current, 
+      temperature: temperature,
+      soc: soc,
+      soh: soh,
+      maximumCellVoltage: maximumCellVoltage,
+      minimumCellVoltage: minimumCellVoltage,
+      maximumCellTemperature: maximumCellTemperature,
+      minimumCellTemperature: minimumCellTemperature
+    };
+
+    const dbResponse = await data.funcTable('func_updaterack', 
+      `(
+        ${rackId},
+        '${rackName}',
+        '${model}',
+        '${brand}',
+        '${JSON.stringify(template)}'
+      )`
+    );
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if(dbResponse.data[0].func_updaterack === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Rack not found!"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "Edit successful"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+});
+
+router.get("/getAllRack", verify, async (req, res) => {
+  try {
+    const dbResponse = await data.funcTable(`func_getAllRack`, '()');
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      data: dbResponse.data
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+});
 
 router.post("/createModule", verify, async (req, res) => {
   try {
@@ -2376,11 +2491,15 @@ router.post("/v3/createModule", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 
 router.post("/editModule", verify, async (req, res) => {
   try {
-    const { rackId, totalModules, totalCells } = req.body;
+    const { 
+      rackId, 
+      totalModules, 
+      totalCells 
+  } = req.body;
 
     const dbResponse = await data.funcTable('func_deletemodule', `(${rackId})`);
 
@@ -2478,7 +2597,7 @@ router.post("/editModule", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 
 router.post("/v2/editModule", verify, async (req, res) => {
   try {
@@ -2580,30 +2699,6 @@ router.post("/v2/editModule", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
-
-router.get("/getAllRack", verify, async (req, res) => {
-  try {
-    const dbResponse = await data.funcTable(`func_getAllRack`, '()');
-
-    if (dbResponse.status === false) {
-      return res.status(400).json({
-        status: false,
-        msg: "Error db"
-      })
-    };
-
-    res.status(200).json({
-      status: true,
-      data: dbResponse.data
-    })
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({
-      status: false,
-      msg: "Bad request"
-    })
-  }
-})
+});
 //BMS management logic
 module.exports = router;

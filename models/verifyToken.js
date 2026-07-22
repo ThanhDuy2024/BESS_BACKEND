@@ -54,8 +54,6 @@ const verify = async (req, res, next) => {
                 status_: user.data[0].status_
             }
         ]
-
-        console.log(userFormat[0].permission_);
         req.user = userFormat;
         next();
     } catch (error) {
