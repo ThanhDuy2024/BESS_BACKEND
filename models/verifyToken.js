@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const apiData = require("../routes/dataProcess");
+const { errorMonitor } = require("node-cache");
 const verify = async (req, res, next) => {
     try {
         const token = req.headers.token;
@@ -54,6 +55,7 @@ const verify = async (req, res, next) => {
             }
         ]
 
+        console.log(userFormat[0].permission_);
         req.user = userFormat;
         next();
     } catch (error) {

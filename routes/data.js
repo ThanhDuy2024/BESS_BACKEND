@@ -81,7 +81,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/getUser", verify, async (req, res) => {
+router.get("/getUser", verify, async (req, res) => {
   try {
     return res.status(200).json(req.user);
   } catch (error) {
@@ -326,6 +326,22 @@ router.post("/changeUserInfo", verify, async (req, res) => {
 //User management logic
 router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { email } = req.body;
 
     //random digit
@@ -372,6 +388,22 @@ router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
 
 router.post("/createUser", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const checkOtp = cache.get(req.body.otp);
 
     if (!checkOtp) {
@@ -415,8 +447,24 @@ router.post("/createUser", verify, async (req, res) => {
   }
 });
 
-router.post("/getAllUser", verify, async (req, res) => {
+router.get("/getAllUser", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const user = await data.funcTable("func_getalluser", `()`);
     return res.status(200).json(user);
   } catch (error) {
@@ -430,6 +478,22 @@ router.post("/getAllUser", verify, async (req, res) => {
 
 router.post("/updateUser", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('update')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const dbResponse = await data.funcTable('func_updateuser',
       `(
         ${req.body.userId},
@@ -475,6 +539,21 @@ router.post("/updateUser", verify, async (req, res) => {
 
 router.post("/deleteUser", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('delete')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
     const { userId } = req.body;
     const dbResponse = await data.funcTable('func_deleteuser',
       `(
@@ -511,6 +590,22 @@ router.post("/deleteUser", verify, async (req, res) => {
 
 router.get("/recoveryList", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('recovery')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const filter = {
       search: '',
       sort: 'id'
@@ -590,6 +685,22 @@ router.get("/recoveryList", verify, async (req, res) => {
 
 router.post("/recovery", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('recovery')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const dbResponse = await data.funcTable('func_recoveryUser',
       `(
         ${req.body.userId}
@@ -626,6 +737,22 @@ router.post("/recovery", verify, async (req, res) => {
 //new api delete user recovery
 router.post("/deleteUserRecovery", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.users) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.users.includes('recovery')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { userId } = req.body;
     const dbResponse = await data.funcTable('func_deleteuserrecovery',
       `(
@@ -664,6 +791,22 @@ router.post("/deleteUserRecovery", verify, async (req, res) => {
 //Logic role and permission
 router.post("/createRole", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.roles) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.roles.includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { roleName, status } = req.body;
     const roleNameFormat = roleName.toLowerCase();
     const dbResponse = await data.funcTable('func_insertrole',
@@ -703,6 +846,22 @@ router.post("/createRole", verify, async (req, res) => {
 
 router.get("/getAllRoles", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.roles) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.roles.includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const filter = {
       search: "",
       status: "",
@@ -791,6 +950,22 @@ router.get("/getAllRoles", verify, async (req, res) => {
 
 router.post("/deleteRole", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.roles) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.roles.includes('delete')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { roleId } = req.body;
     const dbResponse = await data.funcTable('func_deleterole',
       `(
@@ -824,6 +999,22 @@ router.post("/deleteRole", verify, async (req, res) => {
 
 router.get("/roleDetail/:id", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission.roles) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission.roles.includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const dbResponse = await data.funcTable('func_getrole', `(${req.params.id})`);
 
     if (dbResponse.status === false) {
@@ -862,6 +1053,22 @@ router.get("/roleDetail/:id", verify, async (req, res) => {
 
 router.post("/roleUpdate", verify, async (req, res) => {
   try {
+    const permissiondb = req.user[0].permission_;
+
+    if(!permissiondb.roles) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permissiondb.roles.includes('update')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { id, roleName, status, permission } = req.body;
 
     const dbResponse = await data.funcTable('func_updaterole',
@@ -904,6 +1111,21 @@ router.post("/roleUpdate", verify, async (req, res) => {
 //Report logic
 router.post("/calculate", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission["energy-report"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["energy-report"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
 
     const { date } = req.body;
 
@@ -950,6 +1172,22 @@ router.post("/calculate", verify, async (req, res) => {
 
 router.post("/getAllReport", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission["energy-report"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["energy-report"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { date } = req.body;
 
     const [day, month, year] = date.split("/");
@@ -1009,8 +1247,22 @@ router.post("/getAllReport", verify, async (req, res) => {
 });
 
 router.get("/getAllReportPagination", verify, async (req, res) => {
-
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission["energy-report"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["energy-report"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
     const date = req.query.date;
     const [day, month, year] = date.split("/");
     const formattedDate = `${month}/${day}/${year}`;
@@ -1071,6 +1323,21 @@ router.get("/getAllReportPagination", verify, async (req, res) => {
 
 router.post("/export-excel-today", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if(!permission["energy-report"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["energy-report"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
     const date = req.body.date;
     const newDate = formatDate(date);
     const reports = await mongo.Report.findOne({
@@ -1250,8 +1517,8 @@ router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) =
 router.get("/getAllRackInfo", verify, async (req, res) => {
   try {
     const dbResponse = await data.funcTable('func_getallrackinfo', '()');
-    
-    if(dbResponse.status === false) {
+
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "error db"
@@ -1488,7 +1755,7 @@ router.post("/createRack", verify, async (req, res) => {
 
     const getRackWhenCreated = await data.funcTable('func_getrackwhencreated', '()');
 
-    if(getRackWhenCreated.status === false) {
+    if (getRackWhenCreated.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db!"
@@ -1496,7 +1763,6 @@ router.post("/createRack", verify, async (req, res) => {
     }
 
     const rack = getRackWhenCreated.data[0];
-    console.log(rack);
     res.status(200).json({
       status: true,
       msg: "Rack has created!",
@@ -1510,6 +1776,257 @@ router.post("/createRack", verify, async (req, res) => {
     })
   }
 });
+
+router.post("/v2/createRack", verify, async (req, res) => {
+  try {
+    const {
+      rackName,
+      model,
+      brand,
+      voltage,
+      current,
+      temperature,
+      soc,
+      soh,
+      maximumCellVoltage,
+      minimumCellVoltage,
+      maximumCellTemperature,
+      minimumCellTemperature,
+    } = req.body;
+
+    const getAllRack = await data.funcTable('func_getallrack', `()`);
+
+    if (getAllRack.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "error db"
+      })
+    };
+
+    if (getAllRack.data.length === 0) {
+      const startRackAddress = 100;
+      const obj = {
+        rackName: rackName,
+        model: model,
+        brand: brand,
+        startRackAddress: startRackAddress,
+        template: {
+          status: {
+            register: "100-1",
+            scale: 0,
+            offset: 0,
+            type: "word"
+          },
+
+          voltage: {
+            register: "115-1",
+            scale: voltage.scale,
+            offset: voltage.offset,
+            type: "word"
+          },
+
+          current: {
+            register: "116-1",
+            scale: current.scale,
+            offset: current.offset,
+            type: "word"
+          },
+
+          temperature: {
+            register: "117-1",
+            scale: temperature.scale,
+            offset: temperature.offset,
+            type: "word"
+          },
+
+          soc: {
+            register: "118-1",
+            scale: soc.scale,
+            offset: soc.offset,
+            type: "word"
+          },
+
+          soh: {
+            register: "119-1",
+            scale: soh.scale,
+            offset: soh.offset,
+            type: "word"
+          },
+
+          maximumCellVoltage: {
+            register: "123-1",
+            scale: maximumCellVoltage.scale,
+            offset: maximumCellVoltage.offset,
+            type: "word"
+          },
+
+          minimumCellVoltage: {
+            register: "125-1",
+            scale: minimumCellVoltage.scale,
+            offset: minimumCellVoltage.offset,
+            type: "word"
+          },
+
+          maximumCellTemperature: {
+            register: "127-1",
+            scale: maximumCellTemperature.scale,
+            offset: maximumCellTemperature.offset,
+            type: "word"
+          },
+
+          minimumCellTemperature: {
+            register: "129-1",
+            scale: minimumCellTemperature.scale,
+            offset: minimumCellTemperature.offset,
+            type: "word"
+          },
+        }
+      }
+      const createRack = await data.funcTable('func_createrack',
+        `(
+          '${obj.rackName}',
+          '${obj.model}',
+          '${obj.brand}',
+          ${startRackAddress},
+          '${JSON.stringify(obj.template)}'
+        )`
+      )
+
+      if (createRack.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db",
+        })
+      };
+
+      if (createRack.data[0].func_createrack === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "Rack name is existed!",
+        })
+      }
+    } else if (getAllRack.data.length !== 0) {
+      const startRackAddress = getAllRack.data[getAllRack.data.length - 1].start_rack_address_ + 3000;
+      const obj = {
+        rackName: rackName,
+        model: model,
+        brand: brand,
+        startRackAddress: startRackAddress,
+        template: {
+          status: {
+            register: `${startRackAddress}-1`,
+            scale: 0,
+            offset: 0,
+            type: "word"
+          },
+          voltage: {
+            register: `${startRackAddress + 15}-1`,
+            scale: voltage.scale,
+            offset: voltage.offset,
+            type: "word"
+          },
+          current: {
+            register: `${startRackAddress + 16}-1`,
+            scale: current.scale,
+            offset: current.offset,
+            type: "word"
+          },
+          temperature: {
+            register: `${startRackAddress + 17}-1`,
+            scale: temperature.scale,
+            offset: temperature.offset,
+            type: "word"
+          },
+          soc: {
+            register: `${startRackAddress + 18}-1`,
+            scale: soc.scale,
+            offset: soc.offset,
+            type: "word"
+          },
+          soh: {
+            register: `${startRackAddress + 19}-1`,
+            scale: soh.scale,
+            offset: soh.offset,
+            type: "word"
+          },
+          maximumCellVoltage: {
+            register: `${startRackAddress + 23}-1`,
+            scale: maximumCellVoltage.scale,
+            offset: maximumCellVoltage.offset,
+            type: "word"
+          },
+
+          minimumCellVoltage: {
+            register: `${startRackAddress + 25}-1`,
+            scale: minimumCellVoltage.scale,
+            offset: minimumCellVoltage.offset,
+            type: "word"
+          },
+
+          maximumCellTemperature: {
+            register: `${startRackAddress + 27}-1`,
+            scale: maximumCellTemperature.scale,
+            offset: maximumCellTemperature.offset,
+            type: "word"
+          },
+
+          minimumCellTemperature: {
+            register: `${startRackAddress + 29}-1`,
+            scale: minimumCellTemperature.scale,
+            offset: maximumCellTemperature.offset,
+            type: "word"
+          },
+        }
+      };
+
+      const createRack = await data.funcTable('func_createrack',
+        `(
+          '${obj.rackName}',
+          '${obj.model}',
+          '${obj.brand}',
+          ${startRackAddress},
+          '${JSON.stringify(obj.template)}'
+        )`
+      )
+
+      if (createRack.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db",
+        })
+      };
+
+      if (createRack.data[0].func_createrack === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "Rack name is existed!",
+        })
+      }
+    }
+
+    const getRackWhenCreated = await data.funcTable('func_getrackwhencreated', '()');
+
+    if (getRackWhenCreated.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    }
+
+    const rack = getRackWhenCreated.data[0];
+    res.status(200).json({
+      status: true,
+      msg: "Rack has created!",
+      data: rack
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request!"
+    })
+  }
+})
 
 router.post("/createModule", verify, async (req, res) => {
   try {
@@ -1545,7 +2062,7 @@ router.post("/createModule", verify, async (req, res) => {
         cells: [],
       }
 
-      for (let i = startCellAddress; i <=  (startCellAddress + totalCells) - 1; i++) {
+      for (let i = startCellAddress; i <= (startCellAddress + totalCells) - 1; i++) {
         obj.cells.push({
           cellVoltage: {
             register: `${i}-1`,
@@ -1598,14 +2115,14 @@ router.post("/createModule", verify, async (req, res) => {
       const module = getModule.data[getModule.data.length - 1]
       const startCellAddress = module.start_cell_address_ + module.total_cells_ + 1;
 
-      const currentTotalCellInRack = await data.funcTable('func_totalcell', 
+      const currentTotalCellInRack = await data.funcTable('func_totalcell',
         `(
           ${rackId}
         )`
       )
       const checkAddress = currentTotalCellInRack.data[0].func_totalcell + totalCells;
 
-      if(checkAddress > 700) {
+      if (checkAddress > 700) {
         return res.status(400).json({
           status: false,
           msg: "Cell full"
@@ -1620,7 +2137,7 @@ router.post("/createModule", verify, async (req, res) => {
         cells: [],
       }
 
-      for(let i = startCellAddress; i <= (startCellAddress + totalCells) - 1; i++) {
+      for (let i = startCellAddress; i <= (startCellAddress + totalCells) - 1; i++) {
         obj.cells.push({
           cellVoltage: {
             register: `${i}-1`,
@@ -1689,19 +2206,22 @@ router.post("/v2/createModule", verify, async (req, res) => {
   try {
     const { rackId, totalModules, totalCells } = req.body;
     const realTotalCell = 700;
+
     if (totalModules * totalCells > 700) {
       return res.status(400).json({
         status: false,
         msg: "Cell full"
       })
     }
+
     const getModule = await data.funcTable('func_getRack',
       `(
         ${rackId}
       )`
     );
-    let startAddress = getModule.data[0].start_rack_address_ + 91
-    let ans;
+
+    let startAddress = getModule.data[0].start_rack_address_ + 91;
+
     for (let i = 1; i <= totalModules; i++) {
       const obj = {
         rackId: rackId,
@@ -1754,9 +2274,10 @@ router.post("/v2/createModule", verify, async (req, res) => {
         })
       };
     }
+
     return res.status(200).json({
       status: true,
-      msg: "Rack has created!",
+      msg: "Module has created!",
     })
   } catch (error) {
     console.log(error);
@@ -1767,11 +2288,305 @@ router.post("/v2/createModule", verify, async (req, res) => {
   }
 });
 
+router.post("/v3/createModule", verify, async (req, res) => {
+  try {
+    const { rackId, totalModules, totalCells, cellVoltage, cellTemperature, cellSoc, cellSoh } = req.body;
+    const realTotalCell = 700;
+
+    if (totalModules * totalCells > 700) {
+      return res.status(400).json({
+        status: false,
+        msg: "Cell full"
+      })
+    }
+
+    const getModule = await data.funcTable('func_getRack',
+      `(
+        ${rackId}
+      )`
+    );
+
+    let startAddress = getModule.data[0].start_rack_address_ + 91;
+
+    for (let i = 1; i <= totalModules; i++) {
+      const obj = {
+        rackId: rackId,
+        moduleName: `Module 0${i}`,
+        startCellAddress: startAddress,
+        totalCells: totalCells,
+        cells: [],
+      }
+
+      for (let j = startAddress; j <= startAddress + totalCells - 1; j++) {
+        obj.cells.push({
+          cellVoltage: {
+            register: `${j}-1`,
+            scale: cellVoltage.scale,
+            offset: cellVoltage.offset,
+            type: "word"
+          },
+          cellTemperature: {
+            register: `${j + 700}-1`,
+            scale: cellTemperature.scale,
+            offset: cellTemperature.offset,
+            type: "word"
+          },
+          cellSoc: {
+            register: `${j + 700 + 700}-1`,
+            scale: cellSoc.scale,
+            offset: cellSoc.offset,
+            type: "word"
+          },
+          cellSoh: {
+            register: `${j + 700 + 700 + 700}-1`,
+            scale: cellSoh.scale,
+            offset: cellSoh.offset,
+            type: "word"
+          }
+        });
+      }
+
+      startAddress = startAddress + totalCells + 1;
+      const createModule = await data.funcTable('func_createmodule',
+        `(
+          ${obj.rackId},
+          '${obj.moduleName}',
+          ${obj.startCellAddress},
+          ${obj.totalCells},
+          '${JSON.stringify(obj.cells)}'
+        )`
+      )
+
+      if (createModule.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db"
+        })
+      };
+    }
+
+    return res.status(200).json({
+      status: true,
+      msg: "Module has created!",
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
+
+router.post("/editModule", verify, async (req, res) => {
+  try {
+    const { rackId, totalModules, totalCells } = req.body;
+
+    const dbResponse = await data.funcTable('func_deletemodule', `(${rackId})`);
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    }
+
+    if (dbResponse.data[0].func_deletemodule === false) {
+      return res.status(404).json({
+        status: false,
+        msg: "Rack not found!"
+      })
+    }
+    const realTotalCell = 700;
+
+    if (totalModules * totalCells > 700) {
+      return res.status(400).json({
+        status: false,
+        msg: "Cell full"
+      })
+    }
+
+    const getModule = await data.funcTable('func_getRack',
+      `(
+        ${rackId}
+      )`
+    );
+
+    let startAddress = getModule.data[0].start_rack_address_ + 91;
+
+    for (let i = 1; i <= totalModules; i++) {
+      const obj = {
+        rackId: rackId,
+        moduleName: `Module 0${i}`,
+        startCellAddress: startAddress,
+        totalCells: totalCells,
+        cells: [],
+      }
+      for (let j = startAddress; j <= startAddress + totalCells - 1; j++) {
+        obj.cells.push({
+          cellVoltage: {
+            register: `${j}-1`,
+            scale: 0.001,
+            offset: 0,
+            type: "word"
+          },
+          cellTemperature: {
+            register: `${j + 700}-1`,
+            scale: 1,
+            offset: -40,
+            type: "word"
+          },
+          cellSoc: {
+            register: `${j + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          },
+          cellSoh: {
+            register: `${j + 700 + 700 + 700}-1`,
+            scale: 1,
+            offset: 0
+          }
+        });
+      }
+      startAddress = startAddress + totalCells + 1;
+      const createModule = await data.funcTable('func_createmodule',
+        `(
+          ${obj.rackId},
+          '${obj.moduleName}',
+          ${obj.startCellAddress},
+          ${obj.totalCells},
+          '${JSON.stringify(obj.cells)}'
+        )`
+      )
+
+      if (createModule.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db"
+        })
+      };
+    }
+
+    res.status(200).json({
+      status: true,
+      msg: "Edit successful!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
+
+router.post("/v2/editModule", verify, async (req, res) => {
+  try {
+    const { rackId, totalModules, totalCells, cellVoltage, cellTemperature, cellSoc, cellSoh } = req.body;
+
+    const dbResponse = await data.funcTable('func_deletemodule', `(${rackId})`);
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    }
+
+    if (dbResponse.data[0].func_deletemodule === false) {
+      return res.status(404).json({
+        status: false,
+        msg: "Rack not found!"
+      })
+    }
+    const realTotalCell = 700;
+
+    if (totalModules * totalCells > 700) {
+      return res.status(400).json({
+        status: false,
+        msg: "Cell full"
+      })
+    }
+
+    const getModule = await data.funcTable('func_getRack',
+      `(
+        ${rackId}
+      )`
+    );
+
+    let startAddress = getModule.data[0].start_rack_address_ + 91;
+
+    for (let i = 1; i <= totalModules; i++) {
+      const obj = {
+        rackId: rackId,
+        moduleName: `Module 0${i}`,
+        startCellAddress: startAddress,
+        totalCells: totalCells,
+        cells: [],
+      }
+      for (let j = startAddress; j <= startAddress + totalCells - 1; j++) {
+        obj.cells.push({
+          cellVoltage: {
+            register: `${j}-1`,
+            scale: cellVoltage.scale,
+            offset: cellVoltage.offset,
+            type: "word"
+          },
+          cellTemperature: {
+            register: `${j + 700}-1`,
+            scale: cellTemperature.scale,
+            offset: cellTemperature.offset,
+            type: "word"
+          },
+          cellSoc: {
+            register: `${j + 700 + 700}-1`,
+            scale: cellSoc.scale,
+            offset: cellSoc.offset
+          },
+          cellSoh: {
+            register: `${j + 700 + 700 + 700}-1`,
+            scale: cellSoh.scale,
+            offset: cellSoh.offset
+          }
+        });
+      }
+      startAddress = startAddress + totalCells + 1;
+      const createModule = await data.funcTable('func_createmodule',
+        `(
+          ${obj.rackId},
+          '${obj.moduleName}',
+          ${obj.startCellAddress},
+          ${obj.totalCells},
+          '${JSON.stringify(obj.cells)}'
+        )`
+      )
+
+      if (createModule.status === false) {
+        return res.status(400).json({
+          status: false,
+          msg: "error db"
+        })
+      };
+    }
+
+    res.status(200).json({
+      status: true,
+      msg: "Edit successful!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
+
 router.get("/getAllRack", verify, async (req, res) => {
   try {
     const dbResponse = await data.funcTable(`func_getAllRack`, '()');
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db"
