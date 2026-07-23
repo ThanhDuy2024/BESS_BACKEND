@@ -1538,6 +1538,7 @@ router.get("/getAllRackInfo", verify, async (req, res) => {
 //end bms logic
 
 //BMS management logic
+//BMS rack logic
 router.post("/createRack", verify, async (req, res) => {
   try {
     const { rackName, model, brand } = req.body;
@@ -2059,18 +2060,20 @@ router.post("/editRack", verify, async (req, res) => {
       rackName, 
       model, 
       brand, 
+      status,
       voltage, 
       current, 
       temperature,
       soc,
       soh,
-      maximumCellVoltage,
       minimumCellVoltage,
-      maximumCellTemperature,
-      minimumCellTemperature
+      maximumCellVoltage,
+      minimumCellTemperature,
+      maximumCellTemperature
     } = req.body;
 
     const template = {
+      status: status,
       voltage: voltage,
       current: current, 
       temperature: temperature,
@@ -2142,7 +2145,9 @@ router.get("/getAllRack", verify, async (req, res) => {
     })
   }
 });
+//End bms rack logic
 
+//BMS module logic
 router.post("/createModule", verify, async (req, res) => {
   try {
     const { rackId, moduleName, totalCells } = req.body;
@@ -2700,5 +2705,6 @@ router.post("/v2/editModule", verify, async (req, res) => {
     })
   }
 });
+//End bms module logic
 //BMS management logic
 module.exports = router;
