@@ -328,7 +328,7 @@ router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -390,7 +390,7 @@ router.post("/createUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -451,7 +451,7 @@ router.get("/getAllUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -480,7 +480,7 @@ router.post("/updateUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -541,7 +541,7 @@ router.post("/deleteUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -592,7 +592,7 @@ router.get("/recoveryList", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -687,7 +687,7 @@ router.post("/recovery", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -739,7 +739,7 @@ router.post("/deleteUserRecovery", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.users) {
+    if (!permission.users) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -793,7 +793,7 @@ router.post("/createRole", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.roles) {
+    if (!permission.roles) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -848,7 +848,7 @@ router.get("/getAllRoles", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.roles) {
+    if (!permission.roles) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -952,7 +952,7 @@ router.post("/deleteRole", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.roles) {
+    if (!permission.roles) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -1001,7 +1001,7 @@ router.get("/roleDetail/:id", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission.roles) {
+    if (!permission.roles) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -1055,7 +1055,7 @@ router.post("/roleUpdate", verify, async (req, res) => {
   try {
     const permissiondb = req.user[0].permission_;
 
-    if(!permissiondb.roles) {
+    if (!permissiondb.roles) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -1113,7 +1113,7 @@ router.post("/calculate", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission["energy-report"]) {
+    if (!permission["energy-report"]) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -1174,7 +1174,7 @@ router.post("/getAllReport", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission["energy-report"]) {
+    if (!permission["energy-report"]) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -1250,7 +1250,7 @@ router.get("/getAllReportPagination", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission["energy-report"]) {
+    if (!permission["energy-report"]) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -1325,7 +1325,7 @@ router.post("/export-excel-today", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
-    if(!permission["energy-report"]) {
+    if (!permission["energy-report"]) {
       return res.status(400).json({
         status: false,
         msg: "Not permission!"
@@ -2034,18 +2034,26 @@ router.get("/rackDetail/:id", verify, async (req, res) => {
 
     const dbResponse = await data.funcTable('func_getrack', `(${id})`);
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db"
       })
     };
+
+    if (dbResponse.data.length === 0) {
+      return res.status(404).json({
+        status: false,
+        msg: "Rack not found!"
+      })
+    };
+
     res.status(200).json({
       status: true,
       data: dbResponse.data[0]
-    })
+    });
   } catch (error) {
-    console(error);
+    console.log(error);
     res.status(400).json({
       status: false,
       msg: "Bad request"
@@ -2055,14 +2063,14 @@ router.get("/rackDetail/:id", verify, async (req, res) => {
 
 router.post("/editRack", verify, async (req, res) => {
   try {
-    const { 
-      rackId, 
-      rackName, 
-      model, 
-      brand, 
+    const {
+      rackId,
+      rackName,
+      model,
+      brand,
       status,
-      voltage, 
-      current, 
+      voltage,
+      current,
       temperature,
       soc,
       soh,
@@ -2075,7 +2083,7 @@ router.post("/editRack", verify, async (req, res) => {
     const template = {
       status: status,
       voltage: voltage,
-      current: current, 
+      current: current,
       temperature: temperature,
       soc: soc,
       soh: soh,
@@ -2085,7 +2093,7 @@ router.post("/editRack", verify, async (req, res) => {
       minimumCellTemperature: minimumCellTemperature
     };
 
-    const dbResponse = await data.funcTable('func_updaterack', 
+    const dbResponse = await data.funcTable('func_updaterack',
       `(
         ${rackId},
         '${rackName}',
@@ -2095,14 +2103,14 @@ router.post("/editRack", verify, async (req, res) => {
       )`
     );
 
-    if(dbResponse.status === false) {
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db!"
       })
     };
 
-    if(dbResponse.data[0].func_updaterack === false) {
+    if (dbResponse.data[0].func_updaterack === false) {
       return res.status(400).json({
         status: false,
         msg: "Rack not found!"
@@ -2123,8 +2131,14 @@ router.post("/editRack", verify, async (req, res) => {
 });
 
 router.get("/getAllRack", verify, async (req, res) => {
-  try {
-    const dbResponse = await data.funcTable(`func_getAllRack`, '()');
+  try {    
+    const dbResponse = await data.funcTable(`func_getAllRack`, 
+      `(
+        '${req.query.createdAtFillter}', 
+        '${req.query.addressFilter}',
+        '${req.query.search}'
+      )`
+    );
 
     if (dbResponse.status === false) {
       return res.status(400).json({
@@ -2133,9 +2147,24 @@ router.get("/getAllRack", verify, async (req, res) => {
       })
     };
 
+    const racks = [];
+
+    for (const item of dbResponse.data) {
+      const tmp = {
+        id_: item.id_,
+        rack_name_: item.rack_name_,
+        model_: item.model_,
+        brand_: item.brand_,
+        start_rack_address_: item.start_rack_address_,
+        total_module_: item.total_module_,
+        created_at_: format(item.created_at_, "DD/MM/YYYY")
+      }
+      racks.push(tmp);
+    }
+
     res.status(200).json({
       status: true,
-      data: dbResponse.data
+      data: racks
     })
   } catch (error) {
     console.log(error);
@@ -2498,13 +2527,64 @@ router.post("/v3/createModule", verify, async (req, res) => {
   }
 });
 
+router.get("/moduleDetail/:id", verify, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const totalModuleAndTotalCells = await data.funcTable('func_getmoduledetail', `(${id})`);
+
+    if (totalModuleAndTotalCells.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if (totalModuleAndTotalCells.data.length === 0) {
+      return res.status(404).json({
+        status: false,
+        msg: "Module not found"
+      })
+    };
+
+    const total = totalModuleAndTotalCells.data[0];
+
+    const cells = await data.funcTable('func_getcells', `(${id})`);
+
+    if (cells.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    const template = cells.data[0].cells_[0];
+
+    const dataRes = {
+      total,
+      template,
+    }
+
+    res.status(200).json({
+      status: true,
+      data: dataRes
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "bad request"
+    })
+  }
+})
+
 router.post("/editModule", verify, async (req, res) => {
   try {
-    const { 
-      rackId, 
-      totalModules, 
-      totalCells 
-  } = req.body;
+    const {
+      rackId,
+      totalModules,
+      totalCells
+    } = req.body;
 
     const dbResponse = await data.funcTable('func_deletemodule', `(${rackId})`);
 
@@ -2606,7 +2686,17 @@ router.post("/editModule", verify, async (req, res) => {
 
 router.post("/v2/editModule", verify, async (req, res) => {
   try {
-    const { rackId, totalModules, totalCells, cellVoltage, cellTemperature, cellSoc, cellSoh } = req.body;
+    const { 
+      rackId, 
+      totalModules, 
+      totalCells, 
+      cellVoltage, 
+      cellTemperature, 
+      cellSoc,
+      cellSoh
+    } = req.body;
+
+    console.log(req.body);
 
     const dbResponse = await data.funcTable('func_deletemodule', `(${rackId})`);
 
@@ -2665,13 +2755,15 @@ router.post("/v2/editModule", verify, async (req, res) => {
           cellSoc: {
             register: `${j + 700 + 700}-1`,
             scale: cellSoc.scale,
-            offset: cellSoc.offset
+            offset: cellSoc.offset,
+            type: "word"
           },
           cellSoh: {
-            register: `${j + 700 + 700 + 700}-1`,
+            register: `${j + 700 + 700}-1`,
             scale: cellSoh.scale,
-            offset: cellSoh.offset
-          }
+            offset: cellSoh.offset,
+            type: "word"
+          },
         });
       }
       startAddress = startAddress + totalCells + 1;
