@@ -1515,6 +1515,22 @@ router.post("/uploadAvatar", verify, upload.single("avatar"), async (req, res) =
 //BMS LOGIC
 router.get("/getAllRackInfo", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["battery"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["battery"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const dbResponse = await data.funcTable('func_getallrackinfo', '()');
 
     if (dbResponse.status === false) {
@@ -1541,6 +1557,21 @@ router.get("/getAllRackInfo", verify, async (req, res) => {
 //BMS rack logic
 router.post("/createRack", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
     const { rackName, model, brand } = req.body;
 
     const getAllRack = await data.funcTable('func_getallrack', `()`);
@@ -1779,6 +1810,22 @@ router.post("/createRack", verify, async (req, res) => {
 
 router.post("/v2/createRack", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const {
       rackName,
       model,
@@ -2030,6 +2077,22 @@ router.post("/v2/createRack", verify, async (req, res) => {
 
 router.get("/rackDetail/:id", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { id } = req.params;
 
     const dbResponse = await data.funcTable('func_getrack', `(${id})`);
@@ -2063,6 +2126,22 @@ router.get("/rackDetail/:id", verify, async (req, res) => {
 
 router.post("/editRack", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('update')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const {
       rackId,
       rackName,
@@ -2131,8 +2210,24 @@ router.post("/editRack", verify, async (req, res) => {
 });
 
 router.get("/getAllRack", verify, async (req, res) => {
-  try {    
-    const dbResponse = await data.funcTable(`func_getAllRack`, 
+  try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    const dbResponse = await data.funcTable(`func_getAllRack`,
       `(
         '${req.query.createdAtFillter}', 
         '${req.query.addressFilter}',
@@ -2179,6 +2274,22 @@ router.get("/getAllRack", verify, async (req, res) => {
 //BMS module logic
 router.post("/createModule", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { rackId, moduleName, totalCells } = req.body;
 
     const getModule = await data.funcTable('func_getmodule',
@@ -2353,6 +2464,22 @@ router.post("/createModule", verify, async (req, res) => {
 
 router.post("/v2/createModule", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { rackId, totalModules, totalCells } = req.body;
     const realTotalCell = 700;
 
@@ -2439,6 +2566,21 @@ router.post("/v2/createModule", verify, async (req, res) => {
 
 router.post("/v3/createModule", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
     const { rackId, totalModules, totalCells, cellVoltage, cellTemperature, cellSoc, cellSoh } = req.body;
     const realTotalCell = 700;
 
@@ -2529,6 +2671,22 @@ router.post("/v3/createModule", verify, async (req, res) => {
 
 router.get("/moduleDetail/:id", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { id } = req.params;
 
     const totalModuleAndTotalCells = await data.funcTable('func_getmoduledetail', `(${id})`);
@@ -2580,6 +2738,22 @@ router.get("/moduleDetail/:id", verify, async (req, res) => {
 
 router.post("/editModule", verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('update')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const {
       rackId,
       totalModules,
@@ -2686,12 +2860,28 @@ router.post("/editModule", verify, async (req, res) => {
 
 router.post("/v2/editModule", verify, async (req, res) => {
   try {
-    const { 
-      rackId, 
-      totalModules, 
-      totalCells, 
-      cellVoltage, 
-      cellTemperature, 
+    const permission = req.user[0].permission_;
+
+    if (!permission["bms"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["bms"].includes('update')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    const {
+      rackId,
+      totalModules,
+      totalCells,
+      cellVoltage,
+      cellTemperature,
       cellSoc,
       cellSoh
     } = req.body;
@@ -2798,5 +2988,119 @@ router.post("/v2/editModule", verify, async (req, res) => {
   }
 });
 //End bms module logic
-//BMS management logic
+//End BMS management logic
+
+//Alarm management logic
+router.post("/createAlarm", verify, async (req, res) => {
+  try {
+    const { alarmLevel, alarmMessage, alarmAddress } = req.body;
+
+    const dbResponse = await data.funcTable('func_createalarm', `(
+      '${alarmLevel}',
+      '${alarmMessage}',
+      ${alarmAddress}  
+    )`);
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if (dbResponse.data[0].func_createalarm === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Alarm address is existed!"
+      })
+    };
+
+    res.status(200).json({
+      status: false,
+      msg: "Alarm has created"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
+
+router.post("/editAlarm", verify, async (req, res) => {
+  try {
+    const { alarmId, alarmLevel, alarmMessage } = req.body;
+
+    const dbResponse = await data.funcTable('func_updatealarm',
+      `(
+        ${alarmId},
+        '${alarmLevel}',
+        '${alarmMessage}'
+      )`
+    );
+
+    if (dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if (dbResponse.data[0].func_updatealarm === false) {
+      return res.status(404).json({
+        status: false,
+        msg: "Alarm not found!"
+      })
+    };
+
+    res.status(200).json({
+      status: true,
+      msg: "Alarm has edited"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
+
+router.get("/getAllAlarmManagement", verify, async (req, res) => {
+  try {
+    const dbResponse = await data.funcTable('func_getallalarmmanagement', `()`);
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    const alarms = [];
+    for (const item of dbResponse.data) {
+      const temp = {
+        id_: item.id_,
+        level_: item.level_,
+        message_: item.message_,
+        address_: item.address_,
+        created_at_: format(item.created_at_, "DD/MM/YYYY")
+      }
+      alarms.push(temp)
+    };
+
+    res.status(200).json({
+      status: true,
+      data: alarms
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+})
+//End alarm management logic
 module.exports = router;
