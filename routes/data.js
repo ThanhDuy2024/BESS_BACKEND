@@ -3069,7 +3069,12 @@ router.post("/editAlarm", verify, async (req, res) => {
 
 router.get("/getAllAlarmManagement", verify, async (req, res) => {
   try {
-    const dbResponse = await data.funcTable('func_getallalarmmanagement', `()`);
+    const dbResponse = await data.funcTable('func_getallalarmmanagement', 
+      `(
+        '${req.query.createdAtFillter}',
+        '${req.query.search}'
+      )`
+    );
 
     if(dbResponse.status === false) {
       return res.status(400).json({
@@ -3085,7 +3090,7 @@ router.get("/getAllAlarmManagement", verify, async (req, res) => {
         level_: item.level_,
         message_: item.message_,
         address_: item.address_,
-        created_at_: format(item.created_at_, "DD/MM/YYYY")
+        created_at_: format(item.created_at_, "HH:mm DD/MM/YYYY")
       }
       alarms.push(temp)
     };
