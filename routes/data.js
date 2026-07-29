@@ -13,6 +13,28 @@ const { format } = require('date-and-time');
 const { assign } = require("nodemailer/lib/shared");
 const mongo = require("../models/db_models");
 const { upload } = require("../models/core");
+const { 
+  loginValidate, 
+  renderOtpValidate, 
+  verifyOtpValidate, 
+  changePasswordWithOtpValidate, 
+  changePasswordValidate,
+  renderOtpWhenCreateUserValidate,
+  createUserValidate,
+  updateUserValidate,
+  deleteUserValidate,
+  recoveryAndDeleteUserRecoveryValidate,
+  createRoleValidate,
+  deleteRoleValidate,
+  updateRoleValidate,
+  createRackValidate,
+  editRackValidate,
+  createModuleValidate,
+  editModuleValidate,
+  createAlarmValidate,
+  editAlarmValidate,
+  deleteAlarmValidate,
+} = require("../models/validation");
 const limit = 10;
 
 router.get("/", (req, res) => {
@@ -38,7 +60,7 @@ router.post("/getModbusTemp", async (req, res) => {
 });
 
 //Login and get users
-router.post("/login", async (req, res) => {
+router.post("/login", loginValidate, async (req, res) => {
   try {
     const { account, password } = req.body;
     const result = await data.funcTable("func_loginUser", `('${account}')`);
@@ -95,7 +117,7 @@ router.get("/getUser", verify, async (req, res) => {
 //End login and get users
 
 //forgot password
-router.post("/renderOtp", async (req, res) => {
+router.post("/renderOtp", renderOtpValidate, async (req, res) => {
   try {
     const dbResponse = await data.funcTable('func_verifyemail',
       `(
@@ -138,7 +160,7 @@ router.post("/renderOtp", async (req, res) => {
   }
 });
 
-router.post("/verifyOtp", async (req, res) => {
+router.post("/verifyOtp", verifyOtpValidate, async (req, res) => {
   try {
     const email = cache.get(req.body.otp);
     if (!email) {
@@ -161,7 +183,7 @@ router.post("/verifyOtp", async (req, res) => {
   }
 });
 
-router.post("/changePasswordWithOtp", async (req, res) => {
+router.post("/changePasswordWithOtp", changePasswordWithOtpValidate, async (req, res) => {
   try {
     const email = req.body.email;
 
@@ -204,11 +226,11 @@ router.post("/changePasswordWithOtp", async (req, res) => {
 //End forgot password
 
 //change password and change user infor
-router.post("/changePassword", verify, async (req, res) => {
+router.post("/changePassword", changePasswordValidate, verify, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
-    if (req.user.data[0].id_ === 8) {
+    if (req.user.data[0].id_ === 50) {
       return res.status(400).json({
         status: false,
         msg: "You not permission in action"
@@ -324,7 +346,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
 //end change password and change user infor
 
 //User management logic
-router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
+router.post("/renderOtpWhenCreateUser", renderOtpWhenCreateUserValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -386,7 +408,7 @@ router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
   }
 });
 
-router.post("/createUser", verify, async (req, res) => {
+router.post("/createUser", createUserValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -476,7 +498,7 @@ router.get("/getAllUser", verify, async (req, res) => {
   }
 });
 
-router.post("/updateUser", verify, async (req, res) => {
+router.post("/updateUser", updateUserValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -537,7 +559,7 @@ router.post("/updateUser", verify, async (req, res) => {
   }
 });
 
-router.post("/deleteUser", verify, async (req, res) => {
+router.post("/deleteUser", deleteUserValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -683,7 +705,7 @@ router.get("/recoveryList", verify, async (req, res) => {
   }
 });
 
-router.post("/recovery", verify, async (req, res) => {
+router.post("/recovery", recoveryAndDeleteUserRecoveryValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -735,7 +757,7 @@ router.post("/recovery", verify, async (req, res) => {
 });
 
 //new api delete user recovery
-router.post("/deleteUserRecovery", verify, async (req, res) => {
+router.post("/deleteUserRecovery", recoveryAndDeleteUserRecoveryValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -789,7 +811,7 @@ router.post("/deleteUserRecovery", verify, async (req, res) => {
 //End User management logic
 
 //Logic role and permission
-router.post("/createRole", verify, async (req, res) => {
+router.post("/createRole", createRoleValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -948,7 +970,7 @@ router.get("/getAllRoles", verify, async (req, res) => {
   }
 });
 
-router.post("/deleteRole", verify, async (req, res) => {
+router.post("/deleteRole", deleteRoleValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -1051,7 +1073,7 @@ router.get("/roleDetail/:id", verify, async (req, res) => {
   }
 });
 
-router.post("/roleUpdate", verify, async (req, res) => {
+router.post("/roleUpdate", updateRoleValidate, verify, async (req, res) => {
   try {
     const permissiondb = req.user[0].permission_;
 
@@ -1808,7 +1830,7 @@ router.post("/createRack", verify, async (req, res) => {
   }
 });
 
-router.post("/v2/createRack", verify, async (req, res) => {
+router.post("/v2/createRack", createRackValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2124,7 +2146,7 @@ router.get("/rackDetail/:id", verify, async (req, res) => {
   }
 });
 
-router.post("/editRack", verify, async (req, res) => {
+router.post("/editRack", editRackValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2564,7 +2586,7 @@ router.post("/v2/createModule", verify, async (req, res) => {
   }
 });
 
-router.post("/v3/createModule", verify, async (req, res) => {
+router.post("/v3/createModule", createModuleValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2734,7 +2756,7 @@ router.get("/moduleDetail/:id", verify, async (req, res) => {
       msg: "bad request"
     })
   }
-})
+});
 
 router.post("/editModule", verify, async (req, res) => {
   try {
@@ -2858,7 +2880,7 @@ router.post("/editModule", verify, async (req, res) => {
   }
 });
 
-router.post("/v2/editModule", verify, async (req, res) => {
+router.post("/v2/editModule", editModuleValidate, verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2991,8 +3013,24 @@ router.post("/v2/editModule", verify, async (req, res) => {
 //End BMS management logic
 
 //Alarm management logic
-router.post("/createAlarm", verify, async (req, res) => {
+router.post("/createAlarm", createAlarmValidate, verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["alarm-management"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["alarm-management"].includes('create')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
     const { alarmLevel, alarmMessage, alarmAddress } = req.body;
 
     const dbResponse = await data.funcTable('func_createalarm', `(
@@ -3016,7 +3054,7 @@ router.post("/createAlarm", verify, async (req, res) => {
     };
 
     res.status(200).json({
-      status: false,
+      status: true,
       msg: "Alarm has created"
     })
   } catch (error) {
@@ -3026,10 +3064,25 @@ router.post("/createAlarm", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 
-router.post("/editAlarm", verify, async (req, res) => {
+router.post("/editAlarm", editAlarmValidate, verify, async (req, res) => {
   try {
+    const permission = req.user[0].permission_;
+
+    if (!permission["alarm-management"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["alarm-management"].includes('update')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
     const { alarmId, alarmLevel, alarmMessage } = req.body;
 
     const dbResponse = await data.funcTable('func_updatealarm',
@@ -3065,18 +3118,53 @@ router.post("/editAlarm", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
 
 router.get("/getAllAlarmManagement", verify, async (req, res) => {
   try {
-    const dbResponse = await data.funcTable('func_getallalarmmanagement', 
+    const permission = req.user[0].permission_;
+
+    if (!permission["alarm-management"]) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    if (!permission["alarm-management"].includes('read')) {
+      return res.status(400).json({
+        status: false,
+        msg: "Not permission!"
+      })
+    };
+
+    const totalAlarm = await data.funcTable('func_gettotalalarm',
       `(
-        '${req.query.createdAtFillter}',
-        '${req.query.search}'
+        '${req.query.search}',
+        '${req.query.levelFilter}'
       )`
     );
 
-    if(dbResponse.status === false) {
+    if (totalAlarm.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db"
+      })
+    };
+
+    const pagination = funcPagination(Number(req.query.page), limit, Number(totalAlarm.data[0].func_gettotalalarm));
+
+    const dbResponse = await data.funcTable('func_getallalarmmanagement',
+      `(
+        '${req.query.createdAtFillter}',
+        '${req.query.search}',
+        '${req.query.levelFilter}',
+        ${pagination.offset},
+        ${limit}
+      )`
+    );
+
+    if (dbResponse.status === false) {
       return res.status(400).json({
         status: false,
         msg: "Error db!"
@@ -3097,7 +3185,8 @@ router.get("/getAllAlarmManagement", verify, async (req, res) => {
 
     res.status(200).json({
       status: true,
-      data: alarms
+      data: alarms,
+      totalPage: pagination.totalPage
     })
   } catch (error) {
     console.log(error);
@@ -3106,6 +3195,43 @@ router.get("/getAllAlarmManagement", verify, async (req, res) => {
       msg: "Bad request"
     })
   }
-})
+});
+
+router.post("/deleteAlarm", deleteAlarmValidate, verify, async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    const dbResponse = await data.funcTable('func_deletealarm', 
+      `(
+        ${id}
+      )`
+    );
+
+    if(dbResponse.status === false) {
+      return res.status(400).json({
+        status: false,
+        msg: "Error db!"
+      })
+    };
+
+    if(dbResponse.data[0].func_deletealarm === false) {
+      return res.status(404).json({
+        status: false,
+        msg: "Alarm not found!"
+      })
+    }
+
+    res.status(200).json({
+      status: true,
+      msg: "Alarm has deleted"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: false,
+      msg: "Bad request"
+    })
+  }
+});
 //End alarm management logic
 module.exports = router;
