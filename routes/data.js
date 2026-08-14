@@ -13,28 +13,6 @@ const { format } = require('date-and-time');
 const { assign } = require("nodemailer/lib/shared");
 const mongo = require("../models/db_models");
 const { upload } = require("../models/core");
-const { 
-  loginValidate, 
-  renderOtpValidate, 
-  verifyOtpValidate, 
-  changePasswordWithOtpValidate, 
-  changePasswordValidate,
-  renderOtpWhenCreateUserValidate,
-  createUserValidate,
-  updateUserValidate,
-  deleteUserValidate,
-  recoveryAndDeleteUserRecoveryValidate,
-  createRoleValidate,
-  deleteRoleValidate,
-  updateRoleValidate,
-  createRackValidate,
-  editRackValidate,
-  createModuleValidate,
-  editModuleValidate,
-  createAlarmValidate,
-  editAlarmValidate,
-  deleteAlarmValidate,
-} = require("../models/validation");
 const limit = 10;
 
 router.get("/", (req, res) => {
@@ -60,7 +38,7 @@ router.post("/getModbusTemp", async (req, res) => {
 });
 
 //Login and get users
-router.post("/login", loginValidate, async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const { account, password } = req.body;
     const result = await data.funcTable("func_loginUser", `('${account}')`);
@@ -117,7 +95,7 @@ router.get("/getUser", verify, async (req, res) => {
 //End login and get users
 
 //forgot password
-router.post("/renderOtp", renderOtpValidate, async (req, res) => {
+router.post("/renderOtp", async (req, res) => {
   try {
     const dbResponse = await data.funcTable('func_verifyemail',
       `(
@@ -160,7 +138,7 @@ router.post("/renderOtp", renderOtpValidate, async (req, res) => {
   }
 });
 
-router.post("/verifyOtp", verifyOtpValidate, async (req, res) => {
+router.post("/verifyOtp", async (req, res) => {
   try {
     const email = cache.get(req.body.otp);
     if (!email) {
@@ -183,7 +161,7 @@ router.post("/verifyOtp", verifyOtpValidate, async (req, res) => {
   }
 });
 
-router.post("/changePasswordWithOtp", changePasswordWithOtpValidate, async (req, res) => {
+router.post("/changePasswordWithOtp", async (req, res) => {
   try {
     const email = req.body.email;
 
@@ -226,7 +204,7 @@ router.post("/changePasswordWithOtp", changePasswordWithOtpValidate, async (req,
 //End forgot password
 
 //change password and change user infor
-router.post("/changePassword", changePasswordValidate, verify, async (req, res) => {
+router.post("/changePassword", verify, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
@@ -346,7 +324,7 @@ router.post("/changeUserInfo", verify, async (req, res) => {
 //end change password and change user infor
 
 //User management logic
-router.post("/renderOtpWhenCreateUser", renderOtpWhenCreateUserValidate, verify, async (req, res) => {
+router.post("/renderOtpWhenCreateUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -408,7 +386,7 @@ router.post("/renderOtpWhenCreateUser", renderOtpWhenCreateUserValidate, verify,
   }
 });
 
-router.post("/createUser", createUserValidate, verify, async (req, res) => {
+router.post("/createUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -498,7 +476,7 @@ router.get("/getAllUser", verify, async (req, res) => {
   }
 });
 
-router.post("/updateUser", updateUserValidate, verify, async (req, res) => {
+router.post("/updateUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -559,7 +537,7 @@ router.post("/updateUser", updateUserValidate, verify, async (req, res) => {
   }
 });
 
-router.post("/deleteUser", deleteUserValidate, verify, async (req, res) => {
+router.post("/deleteUser", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -705,7 +683,7 @@ router.get("/recoveryList", verify, async (req, res) => {
   }
 });
 
-router.post("/recovery", recoveryAndDeleteUserRecoveryValidate, verify, async (req, res) => {
+router.post("/recovery", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -757,7 +735,7 @@ router.post("/recovery", recoveryAndDeleteUserRecoveryValidate, verify, async (r
 });
 
 //new api delete user recovery
-router.post("/deleteUserRecovery", recoveryAndDeleteUserRecoveryValidate, verify, async (req, res) => {
+router.post("/deleteUserRecovery", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -811,7 +789,7 @@ router.post("/deleteUserRecovery", recoveryAndDeleteUserRecoveryValidate, verify
 //End User management logic
 
 //Logic role and permission
-router.post("/createRole", createRoleValidate, verify, async (req, res) => {
+router.post("/createRole", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -970,7 +948,7 @@ router.get("/getAllRoles", verify, async (req, res) => {
   }
 });
 
-router.post("/deleteRole", deleteRoleValidate, verify, async (req, res) => {
+router.post("/deleteRole", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -1073,7 +1051,7 @@ router.get("/roleDetail/:id", verify, async (req, res) => {
   }
 });
 
-router.post("/roleUpdate", updateRoleValidate, verify, async (req, res) => {
+router.post("/roleUpdate", verify, async (req, res) => {
   try {
     const permissiondb = req.user[0].permission_;
 
@@ -1830,7 +1808,7 @@ router.post("/createRack", verify, async (req, res) => {
   }
 });
 
-router.post("/v2/createRack", createRackValidate, verify, async (req, res) => {
+router.post("/v2/createRack", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2146,7 +2124,7 @@ router.get("/rackDetail/:id", verify, async (req, res) => {
   }
 });
 
-router.post("/editRack", editRackValidate, verify, async (req, res) => {
+router.post("/editRack", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2586,7 +2564,7 @@ router.post("/v2/createModule", verify, async (req, res) => {
   }
 });
 
-router.post("/v3/createModule", createModuleValidate, verify, async (req, res) => {
+router.post("/v3/createModule", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2880,7 +2858,7 @@ router.post("/editModule", verify, async (req, res) => {
   }
 });
 
-router.post("/v2/editModule", editModuleValidate, verify, async (req, res) => {
+router.post("/v2/editModule", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -2907,8 +2885,6 @@ router.post("/v2/editModule", editModuleValidate, verify, async (req, res) => {
       cellSoc,
       cellSoh
     } = req.body;
-
-    console.log(req.body);
 
     const dbResponse = await data.funcTable('func_deletemodule', `(${rackId})`);
 
@@ -3013,7 +2989,7 @@ router.post("/v2/editModule", editModuleValidate, verify, async (req, res) => {
 //End BMS management logic
 
 //Alarm management logic
-router.post("/createAlarm", createAlarmValidate, verify, async (req, res) => {
+router.post("/createAlarm", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -3066,7 +3042,7 @@ router.post("/createAlarm", createAlarmValidate, verify, async (req, res) => {
   }
 });
 
-router.post("/editAlarm", editAlarmValidate, verify, async (req, res) => {
+router.post("/editAlarm", verify, async (req, res) => {
   try {
     const permission = req.user[0].permission_;
 
@@ -3197,7 +3173,7 @@ router.get("/getAllAlarmManagement", verify, async (req, res) => {
   }
 });
 
-router.post("/deleteAlarm", deleteAlarmValidate, verify, async (req, res) => {
+router.post("/deleteAlarm", verify, async (req, res) => {
   try {
     const { id } = req.body;
 
